@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isStudent() {
+      return isAuthenticated() && getUserData().role == 'STUDENT';
+    }
+
+    function isOfficer() {
+      return isAuthenticated() && getUserData().role == 'OFFICER';
+    }
+
+    function isGrievanceCell() {
+      return isAuthenticated() && getUserData().role == 'GRIEVANCE_CELL';
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isGrievanceCell();
+      allow delete: if false;
+    }
+
+    // Grievances Collection
+    match /grievances/{grievanceId} {
+      // Students read their own; Officers read their department; Grievance cell reads all
+      allow read: if isAuthenticated() && (
+        isGrievanceCell() ||
+        resource.data.student_id == request.auth.uid ||
+        (isOfficer() && resource.data.department_id == getUserData().department_id)
+      );
+
+      // Only students can create their own grievances with max 3 photos
+      allow create: if isAuthenticated() &&
+        request.resource.data.student_id == request.auth.uid &&
+        request.resource.data.status == 'OPEN' &&
+        (!('photo_urls' in request.resource.data) || request.resource.data.photo_urls.size() <= 3);
+
+      // Updates: Resolved is final. Escalated is read-only for officer.
+      allow update: if isAuthenticated() && (
+        // Grievance cell can reassign or update non-resolved tickets
+        (isGrievanceCell() && resource.data.status != 'RESOLVED') ||
+        // Department officer can update if not escalated and not resolved
+        (isOfficer() &&
+         resource.data.department_id == getUserData().department_id &&
+         resource.data.status != 'ESCALATED' &&
+         resource.data.status != 'RESOLVED')
+      );
+
+      allow delete: if false;
+
+      // History Subcollection (Audit trail)
+      match /history/{historyId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update, delete: if false;
+      }
+    }
+
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+    }
+  }
+}

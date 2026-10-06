@@ -197,41 +197,30 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
               type="button"
               disabled={isSubmitting}
               onClick={() => handleQuickDemo('student@nmiet.demo')}
-              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high"
+              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high cursor-pointer"
             >
               <span className="font-semibold text-on-surface">Student</span>
-              <span className="text-[10px] text-secondary">Saif (NMIET)</span>
+              <span className="text-[10px] text-secondary">Saif Patil</span>
             </button>
 
             <button
               type="button"
               disabled={isSubmitting}
               onClick={() => handleQuickDemo('officer@nmiet.demo')}
-              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high"
+              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high cursor-pointer"
             >
               <span className="font-semibold text-on-surface">Officer</span>
-              <span className="text-[10px] text-secondary">Electrical</span>
+              <span className="text-[10px] text-secondary">Santosh Shinde</span>
             </button>
 
             <button
               type="button"
               disabled={isSubmitting}
               onClick={() => handleQuickDemo('cell@nmiet.demo')}
-              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high"
+              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high cursor-pointer"
             >
               <span className="font-semibold text-on-surface">Grievance Cell</span>
-              <span className="text-[10px] text-secondary">College Cell</span>
-            </button>
-          </div>
-
-          <div className="mt-2 text-center">
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleQuickDemo('cell@collegeb.demo')}
-              className="text-[11px] text-secondary hover:text-primary underline"
-            >
-              Test Multi-College (College B Cell)
+              <span className="text-[10px] text-secondary">Dr. Joshi</span>
             </button>
           </div>
         </div>

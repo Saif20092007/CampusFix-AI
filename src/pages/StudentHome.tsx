@@ -68,7 +68,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high text-primary text-[11px] font-semibold shadow-sm shrink-0">
           <span className="w-2 h-2 rounded-full bg-tertiary-container animate-ping"></span>
-          <span>{user?.college_display_name || 'NMIET'} Live</span>
+          <span>Campus Live</span>
         </div>
       </div>
 
@@ -242,60 +242,121 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
           {/* Grievances List */}
           {!isLoading && !error && filteredGrievances.length > 0 && (
             <div className="flex flex-col space-y-3.5">
-              {filteredGrievances.map((grievance) => (
-                <div
-                  key={grievance.public_id}
-                  onClick={() => onSelectGrievance(grievance.public_id)}
-                  className="group rounded-xl bg-surface-container-lowest p-4 shadow-sm border border-surface-container hover:border-surface-container-high transition-all active:scale-[0.99] flex flex-col space-y-3 cursor-pointer"
-                >
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-semibold tracking-wider px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-mono">
-                        {grievance.display_no}
-                      </span>
-                      <span className="text-[12px] text-secondary font-medium">
-                        {grievance.category_name}
-                      </span>
+              {filteredGrievances.map((grievance) => {
+                const getCardStatusBorder = (status: string) => {
+                  switch (status?.toUpperCase()) {
+                    case 'SUBMITTED':
+                    case 'ASSIGNED':
+                      return 'border-l-4 border-l-sky-500';
+                    case 'IN_PROGRESS':
+                      return 'border-l-4 border-l-amber-500';
+                    case 'ESCALATED':
+                      return 'border-l-4 border-l-rose-500';
+                    case 'RESOLVED':
+                      return 'border-l-4 border-l-emerald-500';
+                    default:
+                      return 'border-l-4 border-l-surface-container-high';
+                  }
+                };
+
+                return (
+                  <div
+                    key={grievance.public_id}
+                    onClick={() => onSelectGrievance(grievance.public_id)}
+                    className={`group rounded-xl bg-surface-container-lowest p-4 shadow-xs border border-surface-container hover:border-surface-container-high hover:shadow-sm transition-all active:scale-[0.99] flex flex-col space-y-3 cursor-pointer ${getCardStatusBorder(
+                      grievance.status
+                    )}`}
+                  >
+                    {/* Top Row: Ref ID, Category, Priority & Color-Coded Status Chip */}
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold tracking-wider px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-mono">
+                          {grievance.display_no}
+                        </span>
+                        <span className="text-[12px] text-secondary font-medium">
+                          {grievance.category_name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <PriorityChip priority={grievance.priority} size="sm" />
+                        <StatusChip status={grievance.status} size="sm" studentFriendly={true} />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <PriorityChip priority={grievance.priority} size="sm" />
-                      <StatusChip status={grievance.status} size="sm" />
+
+                    {/* Summary & Description */}
+                    <div className="space-y-1">
+                      <h4 className="text-[15px] font-semibold text-on-surface group-hover:text-primary transition-colors leading-snug">
+                        {grievance.summary}
+                      </h4>
+                      <p className="text-[13px] text-secondary line-clamp-2 leading-relaxed">
+                        {grievance.description}
+                      </p>
+                    </div>
+
+                    {/* Location, Department & Photos Pill */}
+                    <div className="flex items-center gap-3 text-[12px] text-secondary flex-wrap">
+                      {grievance.location && (
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[15px] text-primary">location_on</span>
+                          <span className="truncate max-w-[200px]">{grievance.location}</span>
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[15px] text-secondary">domain</span>
+                        <span>{grievance.department_name}</span>
+                      </span>
+                      {grievance.attachments && grievance.attachments.length > 0 && (
+                        <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">
+                          <span className="material-symbols-outlined text-[13px]">image</span>
+                          <span>
+                            {grievance.attachments.length}{' '}
+                            {grievance.attachments.length === 1 ? 'photo' : 'photos'}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Resolved Resolution Note Banner (if available) */}
+                    {grievance.status === 'RESOLVED' && grievance.resolution_note && (
+                      <div className="p-2.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 text-[12px] text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
+                        <span className="material-symbols-outlined text-[16px] text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+                          check_circle
+                        </span>
+                        <p className="line-clamp-1 italic">
+                          <span className="font-semibold not-italic">Resolution:</span>{' '}
+                          {grievance.resolution_note}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Escalation Notice Banner (if escalated) */}
+                    {grievance.status === 'ESCALATED' && (
+                      <div className="p-2 rounded-lg bg-rose-50/70 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 text-[11px] text-rose-800 dark:text-rose-300 flex items-center gap-1.5 font-medium">
+                        <span className="material-symbols-outlined text-[15px] text-rose-600 dark:text-rose-400 shrink-0">
+                          priority_high
+                        </span>
+                        <span>Escalated to college administration for priority resolution</span>
+                      </div>
+                    )}
+
+                    {/* Footer Metadata: SLA shown separately from status chips */}
+                    <div className="flex items-center justify-between pt-2 text-secondary text-[12px] border-t border-surface-container">
+                      <SlaBadge sla={grievance.sla} variant="text" />
+                      <div className="flex items-center gap-1.5 text-on-surface-variant text-[11px]">
+                        <span>
+                          {new Date(grievance.created_at).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}
+                        </span>
+                        <span className="material-symbols-outlined text-[16px] text-secondary group-hover:translate-x-0.5 transition-transform">
+                          chevron_right
+                        </span>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="space-y-1">
-                    <h4 className="text-[15px] font-semibold text-on-surface group-hover:text-primary transition-colors leading-snug">
-                      {grievance.summary}
-                    </h4>
-                    <p className="text-[13px] text-secondary line-clamp-2 leading-relaxed">
-                      {grievance.description}
-                    </p>
-                  </div>
-
-                  {/* Location & Department */}
-                  <div className="flex items-center gap-3 text-[12px] text-secondary flex-wrap">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px] text-primary">location_on</span>
-                      <span className="truncate max-w-[200px]">{grievance.location}</span>
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px] text-secondary">domain</span>
-                      <span>{grievance.department_name}</span>
-                    </span>
-                  </div>
-
-                  {/* Footer Metadata: SLA shown separately from status chips */}
-                  <div className="flex items-center justify-between pt-1 text-secondary text-[12px] border-t border-surface-container">
-                    <SlaBadge sla={grievance.sla} variant="text" />
-                    <span className="text-on-surface-variant text-[11px]">
-                      {new Date(grievance.created_at).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                      })}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

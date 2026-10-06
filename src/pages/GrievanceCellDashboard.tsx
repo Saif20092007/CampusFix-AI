@@ -254,7 +254,7 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
               type="text"
               value={searchQ}
               onChange={(e) => setSearchQ(e.target.value)}
-              placeholder="Search by Ticket ID (e.g. CF-00124), student name, roll number, or keywords..."
+              placeholder="Search by Ticket ID (e.g. CF-00124), student name, department, or keywords..."
               className="w-full h-11 pl-11 pr-14 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline text-[13px] border border-surface-container focus:outline-none focus:ring-2 focus:ring-primary-container"
             />
             <button
@@ -493,7 +493,7 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => alert(`Escalating ${selectedIds.length} tickets to Dean Infrastructure.`)}
+                    onClick={() => alert(`Flagged ${selectedIds.length} tickets for expedited Grievance Cell review.`)}
                     className="px-2.5 py-1 rounded-lg bg-error-container text-error text-[12px] font-bold border border-error-container hover:opacity-90 flex items-center gap-1"
                   >
                     <span className="material-symbols-outlined text-[15px]">priority_high</span>
@@ -715,11 +715,11 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
 
         {/* Right Column: Side Command Widgets (3 cols) */}
         <div className="xl:col-span-3 flex flex-col gap-4">
-          {/* SLA Compliance Health Gauge Card (Stitch Image 7) */}
+          {/* SLA Resolution Health Gauge Card */}
           <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-secondary">
-                SLA Compliance Health
+                SLA Resolution Health
               </span>
               <span className="px-2 py-0.5 rounded-full bg-surface-container-high text-tertiary-container text-[11px] font-bold">
                 Target 90%
@@ -831,35 +831,33 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
             </div>
           </div>
 
-          {/* Campus Broadcast Announcement Widget */}
+          {/* Institutional Resolution Protocol */}
           <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container space-y-2.5">
             <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[18px] text-primary">campaign</span>
-              <h3 className="text-[14px] font-semibold text-on-surface">Public Announcement</h3>
+              <span className="material-symbols-outlined text-[18px] text-primary">policy</span>
+              <h3 className="text-[14px] font-semibold text-on-surface">Institutional SLA Standards</h3>
             </div>
             <p className="text-[11px] text-secondary">
-              Broadcast maintenance downtime notices to student mobile feeds.
+              Standard turnaround thresholds enforced across all campus departments.
             </p>
-
-            <input
-              type="text"
-              value={announcementText}
-              onChange={(e) => setAnnouncementText(e.target.value)}
-              placeholder="e.g. Scheduled power maintenance in Hostel B"
-              className="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface text-[12px] border border-surface-container focus:outline-none"
-            />
-
-            <button
-              type="button"
-              onClick={handlePushAnnouncement}
-              disabled={!announcementText.trim()}
-              className="w-full h-10 rounded-lg bg-primary-container text-on-primary text-[12px] font-semibold flex items-center justify-center gap-1.5 hover:opacity-95 transition-opacity disabled:opacity-50"
-            >
-              <span className="material-symbols-outlined text-[16px]">
-                {announcementSent ? 'check' : 'send'}
-              </span>
-              <span>{announcementSent ? 'Broadcast Dispatched!' : 'Push Notification'}</span>
-            </button>
+            <div className="space-y-1.5 text-[11px]">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+                <span className="font-semibold text-error">Critical Tier</span>
+                <span className="font-mono text-secondary">24 hours</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+                <span className="font-semibold text-amber-700">High Tier</span>
+                <span className="font-mono text-secondary">48 hours</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+                <span className="font-semibold text-primary">Medium Tier</span>
+                <span className="font-mono text-secondary">72 hours</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+                <span className="font-semibold text-secondary">Low Tier</span>
+                <span className="font-mono text-secondary">168 hours</span>
+              </div>
+            </div>
           </div>
 
           {/* AI NLP Engine Status */}

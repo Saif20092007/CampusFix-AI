@@ -13,7 +13,8 @@ import { NotificationsPage } from './pages/NotificationsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { GrievanceCellDashboard } from './pages/GrievanceCellDashboard';
 import { OfficerDashboard } from './pages/OfficerDashboard';
-import { AdminTicketDetail } from './pages/AdminTicketDetail';
+import { OfficerTicketDetail } from './pages/OfficerTicketDetail';
+import { GrievanceCellTicketDetail } from './pages/GrievanceCellTicketDetail';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { api } from './services/api';
 import { AiAnalysisResponse, Grievance, NotificationItem } from './types';
@@ -229,10 +230,17 @@ function MainApp() {
             {showAnalytics ? (
               <AnalyticsPage onBack={() => setShowAnalytics(false)} />
             ) : selectedGrievanceId ? (
-              <AdminTicketDetail
-                publicId={selectedGrievanceId}
-                onBack={handleBackFromDetail}
-              />
+              user.role === 'OFFICER' ? (
+                <OfficerTicketDetail
+                  publicId={selectedGrievanceId}
+                  onBack={handleBackFromDetail}
+                />
+              ) : (
+                <GrievanceCellTicketDetail
+                  publicId={selectedGrievanceId}
+                  onBack={handleBackFromDetail}
+                />
+              )
             ) : studentTab === 'alerts' ? (
               <NotificationsPage
                 notifications={notifications}

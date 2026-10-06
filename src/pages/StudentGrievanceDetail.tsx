@@ -300,12 +300,12 @@ export const StudentGrievanceDetail: React.FC<StudentGrievanceDetailProps> = ({
         </div>
       </div>
 
-      {/* Public Resolution Note & Proof */}
+      {/* Public Resolution Note */}
       <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-surface-container space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[20px] text-primary">verified</span>
-            <h3 className="text-[16px] font-semibold text-on-surface">Public Resolution Note & Proof</h3>
+            <h3 className="text-[16px] font-semibold text-on-surface">Public Resolution Note</h3>
           </div>
           <span
             className={`px-2 py-0.5 rounded text-[11px] font-medium ${
@@ -314,7 +314,7 @@ export const StudentGrievanceDetail: React.FC<StudentGrievanceDetailProps> = ({
                 : 'bg-surface-container-high text-secondary'
             }`}
           >
-            {grievance.status === 'RESOLVED' ? 'Verified' : 'Pending'}
+            {grievance.status === 'RESOLVED' ? 'Resolved' : 'Pending'}
           </span>
         </div>
 
@@ -322,28 +322,20 @@ export const StudentGrievanceDetail: React.FC<StudentGrievanceDetailProps> = ({
           <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-2">
             <div className="flex items-center gap-2 font-semibold text-[14px]">
               <span className="material-symbols-outlined text-[20px] text-emerald-700">task_alt</span>
-              <span>Work Order Completed</span>
+              <span>Resolution Completed</span>
             </div>
             <p className="text-[13px] text-emerald-800 leading-relaxed">
-              {grievance.resolution_note || 'Corridor light fixture replaced with new LED batten and lux level tested.'}
+              {grievance.resolution_note || 'Maintenance work order completed and verified.'}
             </p>
-            <div className="pt-2 text-[11px] text-emerald-700 flex items-center gap-1.5 border-t border-emerald-200">
-              <span className="material-symbols-outlined text-[16px]">shield_person</span>
-              <span>Verified by NMIET Central Estate Superintendent</span>
-            </div>
           </div>
         ) : (
           <div className="bg-surface-container-low rounded-xl p-4 flex flex-col items-center text-center border border-surface-container">
-            <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary mb-2">
-              <span className="material-symbols-outlined text-[24px]">photo_camera</span>
+            <div className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary mb-2">
+              <span className="material-symbols-outlined text-[20px]">hourglass_empty</span>
             </div>
             <p className="text-[13px] font-medium text-on-surface max-w-xs leading-relaxed">
-              Awaiting technician resolution remarks and photo upload upon repair completion.
+              Awaiting departmental resolution remarks upon service completion.
             </p>
-            <div className="w-full flex items-center gap-2 mt-4 pt-3 bg-surface-container-lowest/70 p-2.5 rounded-lg justify-center text-secondary border border-surface-container text-[12px]">
-              <span className="material-symbols-outlined text-[16px] text-tertiary-container">shield_person</span>
-              <span>Will be verified by NMIET Estate Superintendent</span>
-            </div>
           </div>
         )}
       </div>

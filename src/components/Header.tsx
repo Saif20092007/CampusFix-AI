@@ -51,20 +51,15 @@ export const Header: React.FC<HeaderProps> = ({
               src="https://lh3.googleusercontent.com/aida/AEtjO1VAHa6BtotIvGAQa_8ZdhoqIcJGzxLPAkqr8mAka7WvGC-Frw8-glwvYVf_oKeE7LyYE476u_KUCKZ_ek3HNOml2BbAZLIth2TIFSLK4D0twV5rOVScE8aV5V5C9oyCu349Rgfq9uFX75sNMFakyhhHXoxwuwsGCPT2CtzvI8pELn7up1DV5aokHvpn-4lMXujKVPnCDlvEp7UycHa332gtEsg2g7nFqwzkbzDVQ6g1T6e3w9u2AGdKyNk"
             />
             <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-[17px] text-on-surface tracking-tight truncate">
-                  {title || 'CampusFix AI'}
-                </span>
-                <span className="font-medium text-[11px] px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container shrink-0">
-                  {user?.college_display_name || 'NMIET'}
-                </span>
-              </div>
+              <span className="font-semibold text-[17px] text-on-surface tracking-tight truncate">
+                {title || 'CampusFix AI'}
+              </span>
               <span className="text-[11px] text-on-surface-variant truncate">
                 {user?.role === 'STUDENT'
                   ? 'Student Portal'
                   : user?.role === 'OFFICER'
                   ? `Officer · ${user.department_name || 'Dept'}`
-                  : 'Grievance Cell · Admin Console'}
+                  : 'Grievance Cell'}
               </span>
             </div>
           </div>
@@ -85,9 +80,9 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {showDemoMenu && (
-              <div className="absolute right-0 top-12 w-64 rounded-xl bg-surface-container-lowest p-2 shadow-xl border border-surface-container-high z-50 flex flex-col gap-1 text-[13px]">
+              <div className="absolute right-0 top-12 w-56 rounded-xl bg-surface-container-lowest p-2 shadow-xl border border-surface-container-high z-50 flex flex-col gap-1 text-[13px]">
                 <div className="px-2 py-1 text-[11px] font-semibold text-secondary uppercase tracking-wider">
-                  NMIET Accounts
+                  Select Role
                 </div>
                 <button
                   type="button"
@@ -97,8 +92,8 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'student@nmiet.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
                 >
-                  <span>Student (Saif Patil)</span>
-                  <span className="text-[10px] opacity-75">NMIET</span>
+                  <span>Student</span>
+                  <span className="text-[10px] opacity-75">Saif Patil</span>
                 </button>
                 <button
                   type="button"
@@ -108,8 +103,8 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'officer@nmiet.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
                 >
-                  <span>Officer (Santosh Shinde)</span>
-                  <span className="text-[10px] opacity-75">Electrical</span>
+                  <span>Officer</span>
+                  <span className="text-[10px] opacity-75">Santosh Shinde</span>
                 </button>
                 <button
                   type="button"
@@ -119,34 +114,8 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'cell@nmiet.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
                 >
-                  <span>Grievance Cell (Dr. Joshi)</span>
-                  <span className="text-[10px] opacity-75">Admin</span>
-                </button>
-
-                <div className="border-t border-surface-container-high my-1 pt-1 px-2 text-[11px] font-semibold text-secondary uppercase tracking-wider">
-                  College B (Multi-College)
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    switchDemoUser('student@collegeb.demo');
-                    setShowDemoMenu(false);
-                  }}
-                  className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'student@collegeb.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
-                >
-                  <span>Student (Aarav Sharma)</span>
-                  <span className="text-[10px] opacity-75">College B</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    switchDemoUser('cell@collegeb.demo');
-                    setShowDemoMenu(false);
-                  }}
-                  className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'cell@collegeb.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
-                >
-                  <span>Grievance Cell (Prof. Patil)</span>
-                  <span className="text-[10px] opacity-75">College B</span>
+                  <span>Grievance Cell</span>
+                  <span className="text-[10px] opacity-75">Dr. Joshi</span>
                 </button>
               </div>
             )}

@@ -241,7 +241,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
       <div className="pt-2 text-center">
         <p className="text-[11px] text-secondary flex items-center justify-center gap-1">
           <span className="material-symbols-outlined text-[14px]">info</span>
-          <span>Auto-synchronized with NMIET Facility Management Desk</span>
+          <span>Auto-synchronized with College Grievance Desk</span>
         </p>
       </div>
     </div>

@@ -95,7 +95,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onBack }) => {
           </button>
           <div>
             <h1 className="text-[20px] font-bold text-on-surface">Institutional Analytics</h1>
-            <p className="text-[12px] text-secondary">Grievance Cell Compliance & Trends</p>
+            <p className="text-[12px] text-secondary">Resolution Performance & Department Trends</p>
           </div>
         </div>
 

@@ -50,7 +50,7 @@ export const ReportSuccess: React.FC<ReportSuccessProps> = ({
           Complaint Submitted
         </h2>
         <p className="text-[13px] text-secondary mt-1.5 max-w-xs leading-relaxed">
-          Your grievance has been officially registered with NMIET administration.
+          Your grievance has been officially registered with college administration.
         </p>
 
         {/* AI Routing Micro-banner */}

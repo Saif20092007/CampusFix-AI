@@ -36,9 +36,9 @@ runTest(1, "Student cannot access another student's grievance", () => {
 // Test 2: Student cannot access another college's grievance
 runTest(2, "Student cannot access another college's grievance", () => {
   const studentSaif = db.users.find(u => u.email === 'student@nmiet.demo')!; // College 1
-  const collegeBGrievance = db.grievances.find(g => g.college_id === 2)!; // College 2
-  const isAccessible = collegeBGrievance.college_id === studentSaif.college_id;
-  assert.strictEqual(isAccessible, false, "NMIET student cannot access College B grievance");
+  const externalCollegeGrievance = { college_id: 999, student_id: 999 } as unknown as Grievance;
+  const isAccessible = externalCollegeGrievance.college_id === studentSaif.college_id;
+  assert.strictEqual(isAccessible, false, "NMIET student cannot access another college's grievance");
 });
 
 // Test 3: Officer cannot access another department's grievance
@@ -56,12 +56,12 @@ runTest(4, "Grievance Cell can access all grievances in own college", () => {
   assert.ok(allNmietGrievances.length >= 3, "Grievance cell accesses all college complaints");
 });
 
-// Test 5: College B cell cannot access NMIET
-runTest(5, "College B cell cannot access NMIET", () => {
-  const cellCollegeB = db.users.find(u => u.email === 'cell@collegeb.demo')!; // College 2
+// Test 5: External tenant cell cannot access NMIET
+runTest(5, "External tenant cell cannot access NMIET", () => {
+  const externalCell = { college_id: 999, role: 'GRIEVANCE_CELL' } as unknown as User;
   const nmietGrievance = db.grievances.find(g => g.college_id === 1)!;
-  const isAccessible = cellCollegeB.college_id === nmietGrievance.college_id;
-  assert.strictEqual(isAccessible, false, "College B cell cannot access NMIET records");
+  const isAccessible = externalCell.college_id === nmietGrievance.college_id;
+  assert.strictEqual(isAccessible, false, "External tenant cell cannot access NMIET records");
 });
 
 // Test 6: Student cannot change status
@@ -181,7 +181,7 @@ runTest(19, "Analytics are college scoped", () => {
   const cellNmiet = db.users.find(u => u.email === 'cell@nmiet.demo')!;
   const collegeGrievances = db.grievances.filter(g => g.college_id === cellNmiet.college_id);
   const containsOtherCollege = collegeGrievances.some(g => g.college_id !== 1);
-  assert.strictEqual(containsOtherCollege, false, "Analytics must not leak College B records");
+  assert.strictEqual(containsOtherCollege, false, "Analytics must not leak external college records");
 });
 
 // Test 20: ASSIGNED -> ESCALATED works

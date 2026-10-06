@@ -132,7 +132,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
               required
               value={fullname}
               onChange={(e) => setFullname(e.target.value)}
-              placeholder="e.g. Saif Patil"
+              placeholder="e.g. Saif Sayyad"
               className="w-full h-11 pl-10 pr-3 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm transition-all"
             />
           </div>

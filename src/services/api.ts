@@ -6,6 +6,7 @@ import {
   NotificationItem,
   AiAnalysisResponse,
   AnalyticsSummary,
+  GrievanceAiSummary,
 } from '../types';
 
 const TOKEN_KEY = 'campusfix_auth_token';
@@ -203,6 +204,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ kind, note }),
     });
+  },
+
+  async getGrievanceAiSummary(publicId: string): Promise<GrievanceAiSummary> {
+    return request<GrievanceAiSummary>(`/api/grievances/${publicId}/ai-summary`);
   },
 
   // Notifications

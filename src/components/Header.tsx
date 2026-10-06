@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'student@nmiet.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
                 >
                   <span>Student</span>
-                  <span className="text-[10px] opacity-75">Saif Patil</span>
+                  <span className="text-[10px] opacity-75">Saif Sayyad</span>
                 </button>
                 <button
                   type="button"
@@ -115,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'cell@nmiet.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
                 >
                   <span>Grievance Cell</span>
-                  <span className="text-[10px] opacity-75">Dr. Joshi</span>
+                  <span className="text-[10px] opacity-75">Dr. Mahesh Wankhede</span>
                 </button>
               </div>
             )}

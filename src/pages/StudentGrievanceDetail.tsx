@@ -380,11 +380,11 @@ export const StudentGrievanceDetail: React.FC<StudentGrievanceDetailProps> = ({
           {/* Initial student complaint comment */}
           <div className="flex items-start gap-2.5 p-3 rounded-lg bg-surface-container-low border border-surface-container">
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-[12px] shrink-0">
-              SP
+              SS
             </div>
             <div className="flex flex-col min-w-0 flex-1">
               <div className="flex items-center justify-between">
-                <span className="text-[13px] font-semibold text-on-surface">Saif Patil</span>
+                <span className="text-[13px] font-semibold text-on-surface">{grievance.student_name || 'Saif Sayyad'}</span>
                 <span className="text-[11px] text-secondary">
                   {new Date(grievance.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                 </span>

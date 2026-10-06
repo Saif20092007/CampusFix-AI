@@ -86,6 +86,92 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
     }
   };
 
+  const [exportToast, setExportToast] = useState<string | null>(null);
+
+  const handleExportCsv = (selectedOnly: boolean = false) => {
+    const targetList =
+      selectedOnly && selectedIds.length > 0
+        ? grievances.filter((g) => selectedIds.includes(g.public_id))
+        : grievances;
+
+    if (targetList.length === 0) {
+      alert('No grievances available in the current view to export.');
+      return;
+    }
+
+    const headers = [
+      'Ticket Number',
+      'Summary',
+      'Description',
+      'Category',
+      'Department',
+      'Assigned Technician',
+      'Priority',
+      'Status',
+      'Location',
+      'Student Name',
+      'Academic Department',
+      'Year',
+      'Division',
+      'SLA Status',
+      'SLA Time Remaining',
+      'Due Date',
+      'Resolution Note',
+      'Created Date',
+      'Resolved Date',
+    ];
+
+    const escapeCsvCell = (val: any): string => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/\r\n/g, ' ').replace(/\n/g, ' ').replace(/\r/g, ' ');
+      return `"${str.replace(/"/g, '""')}"`;
+    };
+
+    const rows = targetList.map((g) => [
+      escapeCsvCell(g.display_no),
+      escapeCsvCell(g.summary),
+      escapeCsvCell(g.description),
+      escapeCsvCell(g.category_name || 'General'),
+      escapeCsvCell(g.department_name || 'Central Administration'),
+      escapeCsvCell(g.assigned_to_name || 'Unassigned'),
+      escapeCsvCell(g.priority),
+      escapeCsvCell(g.status),
+      escapeCsvCell(g.location || 'Campus Premise'),
+      escapeCsvCell(g.student_name || g.student?.full_name || 'Student'),
+      escapeCsvCell(g.student_academic_dept || g.student?.academic_department || ''),
+      escapeCsvCell(g.student_year || g.student?.year || ''),
+      escapeCsvCell(g.student_division || g.student?.division || ''),
+      escapeCsvCell(g.sla?.status || ''),
+      escapeCsvCell(g.sla?.label || `${g.sla?.hours_remaining ?? 0}h remaining`),
+      escapeCsvCell(g.due_at ? new Date(g.due_at).toLocaleString('en-IN') : ''),
+      escapeCsvCell(g.resolution_note || ''),
+      escapeCsvCell(g.created_at ? new Date(g.created_at).toLocaleString('en-IN') : ''),
+      escapeCsvCell(g.resolved_at ? new Date(g.resolved_at).toLocaleString('en-IN') : ''),
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = selectedOnly
+      ? `CampusFix_Selected_Grievances_${dateStr}.csv`
+      : `CampusFix_Grievances_Report_${dateStr}.csv`;
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setExportToast(`Exported ${targetList.length} ${targetList.length === 1 ? 'grievance' : 'grievances'} to ${filename}`);
+    setTimeout(() => {
+      setExportToast(null);
+    }, 4500);
+  };
+
   const handlePushAnnouncement = () => {
     if (!announcementText.trim()) return;
     setAnnouncementSent(true);
@@ -268,18 +354,11 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <button
               type="button"
-              onClick={() => {
-                const csv = 'Ticket,Summary,Priority,Status\n' + grievances.map(g => `${g.display_no},"${g.summary}",${g.priority},${g.status}`).join('\n');
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `campusfix-report-${Date.now()}.csv`;
-                a.click();
-              }}
-              className="h-10 px-3.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-1.5 text-[13px] font-medium"
+              onClick={() => handleExportCsv(false)}
+              className="h-10 px-3.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-1.5 text-[13px] font-medium shadow-xs transition-colors cursor-pointer"
+              title="Export all displayed grievances to a CSV file"
             >
-              <span className="material-symbols-outlined text-[16px] text-secondary">file_download</span>
+              <span className="material-symbols-outlined text-[16px] text-primary">file_download</span>
               <span>Export CSV</span>
             </button>
 
@@ -479,28 +558,49 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
                 </span>
               </div>
 
-              {selectedIds.length > 0 && (
-                <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {selectedIds.length > 0 ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleExportCsv(true)}
+                      className="px-2.5 py-1 rounded-lg bg-surface text-primary text-[12px] font-semibold border border-primary/20 hover:bg-primary/10 flex items-center gap-1 shadow-xs cursor-pointer transition-colors"
+                      title="Export only selected grievances to CSV"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">file_download</span>
+                      <span>Export Selected ({selectedIds.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (selectedIds.length > 0) setReassignGrievanceId(selectedIds[0]);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-surface text-on-surface text-[12px] font-medium border border-surface-container hover:bg-surface-container flex items-center gap-1 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">tune</span>
+                      <span>Reassign</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => alert(`Flagged ${selectedIds.length} tickets for expedited Grievance Cell review.`)}
+                      className="px-2.5 py-1 rounded-lg bg-error-container text-error text-[12px] font-bold border border-error-container hover:opacity-90 flex items-center gap-1 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">priority_high</span>
+                      <span>Escalate Selected</span>
+                    </button>
+                  </>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (selectedIds.length > 0) setReassignGrievanceId(selectedIds[0]);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-surface text-on-surface text-[12px] font-medium border border-surface-container hover:bg-surface-container flex items-center gap-1"
+                    onClick={() => handleExportCsv(false)}
+                    className="px-2.5 py-1 rounded-lg bg-surface text-on-surface text-[12px] font-medium border border-surface-container hover:bg-surface-container flex items-center gap-1 shadow-xs cursor-pointer transition-colors"
+                    title="Export all grievances in current view to CSV"
                   >
-                    <span className="material-symbols-outlined text-[15px]">tune</span>
-                    <span>Reassign</span>
+                    <span className="material-symbols-outlined text-[15px] text-primary">file_download</span>
+                    <span>Export CSV ({grievances.length})</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => alert(`Flagged ${selectedIds.length} tickets for expedited Grievance Cell review.`)}
-                    className="px-2.5 py-1 rounded-lg bg-error-container text-error text-[12px] font-bold border border-error-container hover:opacity-90 flex items-center gap-1"
-                  >
-                    <span className="material-symbols-outlined text-[15px]">priority_high</span>
-                    <span>Escalate Selected</span>
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Table */}
@@ -942,6 +1042,24 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Export Toast Notification */}
+      {exportToast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md px-4 py-3 rounded-xl bg-surface-container-highest text-on-surface border border-surface-container-high shadow-xl text-[13px] flex items-center gap-2.5 animate-slide-up">
+          <span className="material-symbols-outlined text-[20px] text-emerald-600 dark:text-emerald-400 shrink-0">
+            check_circle
+          </span>
+          <span className="font-medium flex-1">{exportToast}</span>
+          <button
+            type="button"
+            onClick={() => setExportToast(null)}
+            className="text-secondary hover:text-on-surface cursor-pointer p-0.5"
+            aria-label="Dismiss toast"
+          >
+            <span className="material-symbols-outlined text-[16px]">close</span>
+          </button>
         </div>
       )}
     </div>

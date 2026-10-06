@@ -263,7 +263,11 @@ export const OfficerTicketDetail: React.FC<OfficerTicketDetailProps> = ({
               <div className="p-4 rounded-xl bg-surface-container flex flex-col gap-2.5 border border-surface-container-high">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-[12px]">
-                    SP
+                    {(grievance.student?.first_name || grievance.student_name || 'Saif Sayyad')
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)}
                   </div>
                   <div className="flex flex-col">
                     <span className="font-semibold text-[13px] text-on-surface">

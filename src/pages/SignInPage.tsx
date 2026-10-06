@@ -187,41 +187,105 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
           </div>
         </form>
 
-        {/* Quick Demo Login Grid for 3 Roles: Student, Officer, Grievance Cell */}
+        {/* Quick Demo Login Table for NMIET Roles: Student, Officer, Grievance Cell */}
         <div className="mt-5 pt-4 border-t border-surface-container">
-          <p className="text-[11px] font-semibold text-secondary uppercase tracking-wider text-center mb-2.5">
-            Quick Demo Accounts (password: campus123)
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleQuickDemo('student@nmiet.demo')}
-              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high cursor-pointer"
-            >
-              <span className="font-semibold text-on-surface">Student</span>
-              <span className="text-[10px] text-secondary">Saif Patil</span>
-            </button>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[11px] font-semibold text-secondary uppercase tracking-wider">
+              NMIET Demo Accounts
+            </p>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-container text-secondary">
+              password: campus123
+            </span>
+          </div>
 
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleQuickDemo('officer@nmiet.demo')}
-              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high cursor-pointer"
-            >
-              <span className="font-semibold text-on-surface">Officer</span>
-              <span className="text-[10px] text-secondary">Santosh Shinde</span>
-            </button>
+          <div className="overflow-hidden rounded-xl border border-surface-container bg-surface-container-low text-[12px]">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container text-[10px] uppercase font-bold text-secondary border-b border-surface-container">
+                  <th className="py-1.5 px-2.5">Role</th>
+                  <th className="py-1.5 px-2.5 hidden sm:table-cell">Email</th>
+                  <th className="py-1.5 px-2">College</th>
+                  <th className="py-1.5 px-2.5">Description</th>
+                  <th className="py-1.5 px-2 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-container">
+                <tr className="hover:bg-surface-container transition-colors">
+                  <td className="py-2 px-2.5 font-bold text-on-surface whitespace-nowrap">
+                    Student
+                  </td>
+                  <td className="py-2 px-2.5 font-mono text-[11px] text-secondary hidden sm:table-cell">
+                    student@nmiet.demo
+                  </td>
+                  <td className="py-2 px-2 font-semibold text-primary">
+                    NMIET
+                  </td>
+                  <td className="py-2 px-2.5 text-on-surface-variant text-[11px]">
+                    Saif Sayyad (SY CSE, Division B, Roll 56)
+                  </td>
+                  <td className="py-2 px-2 text-right">
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => handleQuickDemo('student@nmiet.demo')}
+                      className="px-2.5 py-1 rounded-md bg-primary-container text-on-primary text-[11px] font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    >
+                      Login
+                    </button>
+                  </td>
+                </tr>
 
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleQuickDemo('cell@nmiet.demo')}
-              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high cursor-pointer"
-            >
-              <span className="font-semibold text-on-surface">Grievance Cell</span>
-              <span className="text-[10px] text-secondary">Dr. Joshi</span>
-            </button>
+                <tr className="hover:bg-surface-container transition-colors">
+                  <td className="py-2 px-2.5 font-bold text-on-surface whitespace-nowrap">
+                    Officer
+                  </td>
+                  <td className="py-2 px-2.5 font-mono text-[11px] text-secondary hidden sm:table-cell">
+                    officer@nmiet.demo
+                  </td>
+                  <td className="py-2 px-2 font-semibold text-primary">
+                    NMIET
+                  </td>
+                  <td className="py-2 px-2.5 text-on-surface-variant text-[11px]">
+                    Santosh Shinde (Electrical Maintenance)
+                  </td>
+                  <td className="py-2 px-2 text-right">
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => handleQuickDemo('officer@nmiet.demo')}
+                      className="px-2.5 py-1 rounded-md bg-primary-container text-on-primary text-[11px] font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    >
+                      Login
+                    </button>
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-surface-container transition-colors">
+                  <td className="py-2 px-2.5 font-bold text-on-surface whitespace-nowrap">
+                    Grievance Cell
+                  </td>
+                  <td className="py-2 px-2.5 font-mono text-[11px] text-secondary hidden sm:table-cell">
+                    cell@nmiet.demo
+                  </td>
+                  <td className="py-2 px-2 font-semibold text-primary">
+                    NMIET
+                  </td>
+                  <td className="py-2 px-2.5 text-on-surface-variant text-[11px]">
+                    Dr. Mahesh Wankhede (NMIET Grievance Cell)
+                  </td>
+                  <td className="py-2 px-2 text-right">
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => handleQuickDemo('cell@nmiet.demo')}
+                      className="px-2.5 py-1 rounded-md bg-primary-container text-on-primary text-[11px] font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    >
+                      Login
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

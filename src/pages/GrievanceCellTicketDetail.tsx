@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { Grievance, Department } from '../types';
+import { Grievance, Department, GrievanceAiSummary } from '../types';
 import { StatusChip } from '../components/StatusChip';
 import { PriorityChip } from '../components/PriorityChip';
 import { SlaBadge } from '../components/SlaBadge';
@@ -22,6 +22,12 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // AI Summary State
+  const [aiSummary, setAiSummary] = useState<GrievanceAiSummary | null>(null);
+  const [isLoadingAiSummary, setIsLoadingAiSummary] = useState(false);
+  const [aiSummaryError, setAiSummaryError] = useState<string | null>(null);
+  const [showAiSummary, setShowAiSummary] = useState(true);
+
   // Modals
   const [showReassignModal, setShowReassignModal] = useState(false);
   const [targetDeptId, setTargetDeptId] = useState<number>(1);
@@ -41,6 +47,20 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
   // Photo viewer modal
   const [viewPhotoUrl, setViewPhotoUrl] = useState<string | null>(null);
 
+  const handleGenerateAiSummary = async () => {
+    setIsLoadingAiSummary(true);
+    setAiSummaryError(null);
+    try {
+      const result = await api.getGrievanceAiSummary(publicId);
+      setAiSummary(result);
+      setShowAiSummary(true);
+    } catch (err: any) {
+      setAiSummaryError(err.message || 'Failed to generate AI synopsis.');
+    } finally {
+      setIsLoadingAiSummary(false);
+    }
+  };
+
   const fetchDetail = async () => {
     setIsLoading(true);
     setError(null);
@@ -58,6 +78,7 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
   useEffect(() => {
     fetchDetail();
     api.getDepartments().then(setDepartments).catch(console.error);
+    handleGenerateAiSummary();
   }, [publicId]);
 
   const handleAddInternalNote = async (e: React.FormEvent) => {
@@ -290,7 +311,11 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-[12px]">
-                      SP
+                      {(grievance.student?.full_name || grievance.student_name || 'Saif Sayyad')
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .slice(0, 2)}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-semibold text-[13px] text-on-surface">
@@ -361,6 +386,143 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
                 </div>
               )}
             </div>
+          </div>
+
+          {/* AI CASE SYNOPSIS & HISTORY CARD FOR GRIEVANCE CELL STAFF */}
+          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-surface-container space-y-4">
+            <div className="flex items-center justify-between gap-2 border-b border-surface-container pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary-container text-on-primary flex items-center justify-center shadow-xs">
+                  <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-[15px] font-bold text-on-surface">AI Case Synopsis & History</h3>
+                    <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed font-bold">
+                      Gemini 3.8
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-secondary">Operational summary generated for Grievance Cell staff</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleGenerateAiSummary}
+                  disabled={isLoadingAiSummary}
+                  className="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-secondary hover:text-on-surface text-[12px] font-medium flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+                  title="Regenerate synopsis based on latest timeline"
+                >
+                  <span className={`material-symbols-outlined text-[15px] ${isLoadingAiSummary ? 'animate-spin' : ''}`}>
+                    refresh
+                  </span>
+                  <span className="hidden sm:inline">Refresh</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAiSummary(!showAiSummary)}
+                  className="w-7 h-7 rounded-lg bg-surface-container hover:bg-surface-container-high text-secondary flex items-center justify-center transition-colors cursor-pointer"
+                  aria-label="Toggle synopsis visibility"
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {showAiSummary ? 'expand_less' : 'expand_more'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {showAiSummary && (
+              <>
+                {isLoadingAiSummary ? (
+                  <div className="p-8 flex flex-col items-center justify-center gap-2 text-center text-secondary">
+                    <span className="material-symbols-outlined text-[28px] animate-spin text-primary">progress_activity</span>
+                    <span className="text-[13px] font-medium">Analyzing grievance trajectory and timeline history...</span>
+                  </div>
+                ) : aiSummaryError ? (
+                  <div className="p-3.5 rounded-lg bg-error-container/20 border border-error-container text-error text-[12px] flex items-center justify-between">
+                    <span>{aiSummaryError}</span>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiSummary}
+                      className="font-bold underline cursor-pointer"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : aiSummary ? (
+                  <div className="space-y-3.5 text-[13px]">
+                    {/* Executive Overview */}
+                    <div className="p-3.5 rounded-lg bg-surface-container-low border border-surface-container">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-primary block mb-1">
+                        Executive Overview
+                      </span>
+                      <p className="text-on-surface leading-relaxed font-normal">
+                        {aiSummary.executiveSummary}
+                      </p>
+                    </div>
+
+                    {/* Current Status Assessment & Recommended Action */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="p-3.5 rounded-lg bg-surface-container-lowest border border-surface-container">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-secondary block mb-1">
+                          Current Status & Ownership
+                        </span>
+                        <p className="text-on-surface leading-relaxed">
+                          {aiSummary.currentStatus}
+                        </p>
+                      </div>
+
+                      <div className="p-3.5 rounded-lg bg-primary/5 dark:bg-primary/10 border border-primary/20">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-primary block mb-1 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[14px]">flag</span>
+                          <span>Recommended Action</span>
+                        </span>
+                        <p className="text-on-surface font-medium leading-relaxed">
+                          {aiSummary.recommendedAction}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Timeline Milestones Progression */}
+                    {aiSummary.timelineHighlights && aiSummary.timelineHighlights.length > 0 && (
+                      <div className="p-3.5 rounded-lg bg-surface-container-low border border-surface-container">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-secondary block mb-2">
+                          History & Milestones Progression
+                        </span>
+                        <ul className="space-y-1.5 pl-1">
+                          {aiSummary.timelineHighlights.map((hl, i) => (
+                            <li key={i} className="flex items-start gap-2 text-on-surface-variant text-[12px]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-1.5"></span>
+                              <span className="leading-snug">{hl}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-[11px] text-secondary pt-1 border-t border-surface-container">
+                      <span>Powered by CampusFix AI institutional triage</span>
+                      <span>Generated {new Date(aiSummary.generatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6 rounded-lg bg-surface-container-low border border-surface-container text-center flex flex-col items-center gap-2">
+                    <p className="text-[13px] text-secondary">
+                      Generate an instant synopsis summarizing student lodgement, department handling, and timeline progress.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiSummary}
+                      className="px-4 py-2 rounded-xl bg-primary-container text-on-primary text-[13px] font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
+                    >
+                      <span className="material-symbols-outlined text-[17px]">auto_awesome</span>
+                      <span>Generate AI Summary</span>
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Grievance Action History Audit Log */}

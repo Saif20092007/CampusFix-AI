@@ -148,3 +148,13 @@ export interface AnalyticsSummary {
     count: number;
   }>;
 }
+
+export interface GrievanceAiSummary {
+  executiveSummary: string;
+  currentStatus: string;
+  timelineHighlights: string[];
+  recommendedAction: string;
+  model: string;
+  generatedAt: string;
+}
+

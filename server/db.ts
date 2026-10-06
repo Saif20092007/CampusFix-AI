@@ -164,12 +164,6 @@ function getInitialDatabase(): DatabaseSchema {
       display_name: 'NMIET',
       created_at: '2024-01-01T00:00:00.000Z',
     },
-    {
-      id: 2,
-      name: 'Pimpri Chinchwad College of Engineering',
-      display_name: 'College B',
-      created_at: '2024-01-01T00:00:00.000Z',
-    },
   ];
 
   const departments: Department[] = [
@@ -181,13 +175,6 @@ function getInitialDatabase(): DatabaseSchema {
     { id: 5, college_id: 1, name: 'Security & Safety', code: 'SEC' },
     { id: 6, college_id: 1, name: 'Transport & Facilities', code: 'TRANS' },
     { id: 7, college_id: 1, name: 'Grievance Cell', code: 'CELL' },
-
-    // College B
-    { id: 8, college_id: 2, name: 'Electrical Maintenance', code: 'ELEC' },
-    { id: 9, college_id: 2, name: 'IT Services & Network', code: 'IT' },
-    { id: 10, college_id: 2, name: 'Civil & Sanitation', code: 'CIVIL' },
-    { id: 11, college_id: 2, name: 'Hostel Administration', code: 'HOSTEL' },
-    { id: 12, college_id: 2, name: 'Grievance Cell', code: 'CELL' },
   ];
 
   const categories: Category[] = [
@@ -203,13 +190,6 @@ function getInitialDatabase(): DatabaseSchema {
     { id: 9, college_id: 1, name: 'Security', department_id: 5 },
     { id: 10, college_id: 1, name: 'Transport', department_id: 6 },
     { id: 11, college_id: 1, name: 'Other', department_id: 7 },
-
-    // College B
-    { id: 12, college_id: 2, name: 'Electrical', department_id: 8 },
-    { id: 13, college_id: 2, name: 'IT Services', department_id: 9 },
-    { id: 14, college_id: 2, name: 'Water / Civil', department_id: 10 },
-    { id: 15, college_id: 2, name: 'Hostel', department_id: 11 },
-    { id: 16, college_id: 2, name: 'Other', department_id: 12 },
   ];
 
   const sla_rules: SlaRule[] = [
@@ -218,12 +198,6 @@ function getInitialDatabase(): DatabaseSchema {
     { id: 2, college_id: 1, priority: 'High', hours: 48 },
     { id: 3, college_id: 1, priority: 'Medium', hours: 72 },
     { id: 4, college_id: 1, priority: 'Low', hours: 168 },
-
-    // College B
-    { id: 5, college_id: 2, priority: 'Critical', hours: 24 },
-    { id: 6, college_id: 2, priority: 'High', hours: 48 },
-    { id: 7, college_id: 2, priority: 'Medium', hours: 72 },
-    { id: 8, college_id: 2, priority: 'Low', hours: 168 },
   ];
 
   const users: User[] = [
@@ -232,13 +206,13 @@ function getInitialDatabase(): DatabaseSchema {
       id: 1,
       email: 'student@nmiet.demo',
       password_hash: defaultPasswordHash,
-      name: 'Saif Patil',
+      name: 'Saif Sayyad',
       role: 'STUDENT',
       college_id: 1,
       department_id: null,
       academic_department: 'Computer Engineering',
-      year: 'TE',
-      division: 'Div B',
+      year: 'SY',
+      division: 'Division B',
       phone: '+91 98220 44910',
       created_at: '2024-10-01T08:00:00.000Z',
     },
@@ -260,7 +234,7 @@ function getInitialDatabase(): DatabaseSchema {
       id: 3,
       email: 'cell@nmiet.demo',
       password_hash: defaultPasswordHash,
-      name: 'Dr. S. K. Joshi',
+      name: 'Dr. Mahesh Wankhede',
       role: 'GRIEVANCE_CELL',
       college_id: 1,
       department_id: 7, // Grievance Cell
@@ -298,50 +272,6 @@ function getInitialDatabase(): DatabaseSchema {
       phone: '+91 98225 55667',
       created_at: '2024-10-01T08:00:00.000Z',
     },
-
-    // College B Users
-    {
-      id: 6,
-      email: 'student@collegeb.demo',
-      password_hash: defaultPasswordHash,
-      name: 'Aarav Sharma',
-      role: 'STUDENT',
-      college_id: 2,
-      department_id: null,
-      academic_department: 'Mechanical Engineering',
-      year: 'SE',
-      division: 'Div A',
-      phone: '+91 98111 22334',
-      created_at: '2024-10-01T08:00:00.000Z',
-    },
-    {
-      id: 7,
-      email: 'officer@collegeb.demo',
-      password_hash: defaultPasswordHash,
-      name: 'Mahesh Deshmukh',
-      role: 'OFFICER',
-      college_id: 2,
-      department_id: 8, // Electrical Maintenance (College B)
-      academic_department: null,
-      year: null,
-      division: null,
-      phone: '+91 98112 33445',
-      created_at: '2024-10-01T08:00:00.000Z',
-    },
-    {
-      id: 8,
-      email: 'cell@collegeb.demo',
-      password_hash: defaultPasswordHash,
-      name: 'Prof. V. N. Patil',
-      role: 'GRIEVANCE_CELL',
-      college_id: 2,
-      department_id: 12, // Grievance Cell (College B)
-      academic_department: null,
-      year: null,
-      division: null,
-      phone: '+91 98113 44556',
-      created_at: '2024-10-01T08:00:00.000Z',
-    },
   ];
 
   const now = new Date();
@@ -355,7 +285,7 @@ function getInitialDatabase(): DatabaseSchema {
       public_id: 'cf-00124-nmiet-8a7b',
       display_no: 'CF-00124',
       college_id: 1,
-      student_id: 1, // Saif Patil
+      student_id: 1, // Saif Sayyad
       description: 'Hallway is completely pitch black. Two students tripped yesterday near the fire reel during evening study hours. Tube lights have been flickering since yesterday evening and completely went dark around 9 PM. Urgent fix needed as it is right beside the fire exit.',
       summary: 'No light in Hostel B corridor, dangerous trip hazard',
       category_id: 1, // Electrical
@@ -376,7 +306,7 @@ function getInitialDatabase(): DatabaseSchema {
       public_id: 'cf-00118-nmiet-9b8c',
       display_no: 'CF-00118',
       college_id: 1,
-      student_id: 1, // Saif Patil
+      student_id: 1, // Saif Sayyad
       description: 'Gateway IP failure during DBMS practical test. Access point restarted and DNS cache flushed by System Admin. All workstations are now connecting reliably.',
       summary: 'Wi-Fi not working in Computer Lab 204',
       category_id: 2, // IT Services
@@ -397,7 +327,7 @@ function getInitialDatabase(): DatabaseSchema {
       public_id: 'cf-00110-nmiet-4c3d',
       display_no: 'CF-00110',
       college_id: 1,
-      student_id: 1, // Saif Patil
+      student_id: 1, // Saif Sayyad
       description: 'Continuous water overflow spreading to corridor tiles creating a slipping hazard near staircase on ground floor of Block C.',
       summary: 'Water leakage near Block C washroom',
       category_id: 4, // Water / Civil
@@ -454,28 +384,6 @@ function getInitialDatabase(): DatabaseSchema {
       assigned_to_name: null,
       resolution_note: null,
     },
-
-    // College B Grievance (Isolated)
-    {
-      id: 6,
-      public_id: 'cf-99001-collb-1a2b',
-      display_no: 'CF-99001',
-      college_id: 2,
-      student_id: 6, // Aarav Sharma
-      description: 'Air conditioning unit not cooling in workshop seminar room.',
-      summary: 'AC malfunctioning in College B Seminar Room',
-      category_id: 12,
-      department_id: 8,
-      priority: 'Medium',
-      location: 'College B Workshop Block',
-      status: 'ASSIGNED',
-      due_at: getFutureIso(40),
-      created_at: getPastIso(8),
-      resolved_at: null,
-      assigned_to_id: 7,
-      assigned_to_name: 'Mahesh Deshmukh',
-      resolution_note: null,
-    },
   ];
 
   const status_history: StatusHistory[] = [
@@ -483,7 +391,7 @@ function getInitialDatabase(): DatabaseSchema {
       id: 1,
       grievance_id: 1,
       actor_id: 1,
-      actor_name: 'Saif Patil',
+      actor_name: 'Saif Sayyad',
       actor_role: 'STUDENT',
       status: 'SUBMITTED',
       kind: 'STATUS_CHANGE',
@@ -556,7 +464,7 @@ function getInitialDatabase(): DatabaseSchema {
   const notifications: Notification[] = [
     {
       id: 1,
-      user_id: 1, // Saif Patil
+      user_id: 1, // Saif Sayyad
       grievance_id: 1,
       public_id: 'cf-00124-nmiet-8a7b',
       display_no: 'CF-00124',
@@ -566,7 +474,7 @@ function getInitialDatabase(): DatabaseSchema {
     },
     {
       id: 2,
-      user_id: 1, // Saif Patil
+      user_id: 1, // Saif Sayyad
       grievance_id: 1,
       public_id: 'cf-00124-nmiet-8a7b',
       display_no: 'CF-00124',
@@ -576,7 +484,7 @@ function getInitialDatabase(): DatabaseSchema {
     },
     {
       id: 3,
-      user_id: 1, // Saif Patil
+      user_id: 1, // Saif Sayyad
       grievance_id: 2,
       public_id: 'cf-00118-nmiet-9b8c',
       display_no: 'CF-00118',
@@ -586,7 +494,7 @@ function getInitialDatabase(): DatabaseSchema {
     },
     {
       id: 4,
-      user_id: 1, // Saif Patil
+      user_id: 1, // Saif Sayyad
       grievance_id: 4,
       public_id: 'cf-00092-nmiet-2e1f',
       display_no: 'CF-00092',
@@ -630,16 +538,15 @@ function getInitialDatabase(): DatabaseSchema {
       }
     ],
     counters: {
-      user_id: 9,
-      department_id: 13,
-      category_id: 17,
-      grievance_id: 7,
+      user_id: 6,
+      department_id: 8,
+      category_id: 12,
+      grievance_id: 6,
       status_history_id: 7,
       notification_id: 6,
       attachment_id: 2,
       display_no_counter: {
         1: 127,
-        2: 2,
       },
     },
   };

@@ -15,7 +15,7 @@ CampusFix AI enables students at Nutan Maharashtra Institute of Engineering & Te
 - **Student AI Draft Review**: Students can inspect suggestions and adjust summary, category, or location before final registration.
 - **Tamper-Proof Priority**: Priority is enforced strictly on the server from the pre-stored AI analysis session.
 - **Departmental Routing**: Categories map directly to service units (Electrical, IT Services, Civil & Sanitation, Hostel, Security, Transport).
-- **Multi-College Tenant Isolation**: Scoped by `college_id` at the database level. NMIET users and College B users cannot leak or view cross-college records.
+- **Multi-College Tenant Isolation Architecture**: Scoped by `college_id` at the database level to ensure robust tenant-isolation architecture.
 - **Dynamic SLA Engine**: Automatically calculates turnaround deadlines (Critical 24h, High 48h, Medium 72h, Low 168h) and displays real-time countdown clocks.
 - **Public & Internal Action Logs**: Clear separation between public student timeline updates and private staff operational remarks.
 - **Staff Escalation Workflow**: Department officers can escalate stalled tickets with internal reasons directly to the Grievance Cell.
@@ -94,11 +94,9 @@ All pre-seeded demo accounts use password: `campus123`
 
 | Role | Email | College | Description |
 |---|---|---|---|
-| **Student** | `student@nmiet.demo` | NMIET | Saif Patil (TE Comp Engg Roll 42) |
-| **Officer** | `officer@nmiet.demo` | NMIET | Santosh Shinde (Electrical Maintenance) |
-| **Grievance Cell** | `cell@nmiet.demo` | NMIET | Dr. S. K. Joshi (Dean Infrastructure) |
-| **College B Student** | `student@collegeb.demo` | College B | Aarav Sharma (Multi-college isolation) |
-| **College B Cell** | `cell@collegeb.demo` | College B | Prof. V. N. Patil (College B Grievance Cell) |
+| Student | `student@nmiet.demo` | NMIET | Saif Sayyad (SY CSE, Division B, Roll 56) |
+| Officer | `officer@nmiet.demo` | NMIET | Santosh Shinde (Electrical Maintenance) |
+| Grievance Cell | `cell@nmiet.demo` | NMIET | Dr. Mahesh Wankhede (NMIET Grievance Cell) |
 
 ---
 

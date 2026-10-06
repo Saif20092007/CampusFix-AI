@@ -14,7 +14,7 @@ import {
   UPLOADS_DIR,
 } from './db.js';
 import { AuthenticatedRequest, requireAuth, requireRole, generateToken, hashPassword, verifyPassword } from './auth.js';
-import { analyzeWithGemini, saveAiAnalysis } from './ai.js';
+import { analyzeWithGemini, saveAiAnalysis, summarizeGrievanceHistoryWithGemini } from './ai.js';
 import { calculateSla, computeDueAt } from './sla.js';
 
 const router = Router();
@@ -651,6 +651,55 @@ router.get('/grievances/:public_id', requireAuth, (req: AuthenticatedRequest, re
   }
 
   res.json(response);
+});
+
+// AI Grievance History Synopsis for staff review
+router.get('/grievances/:public_id/ai-summary', requireAuth, async (req: AuthenticatedRequest, res) => {
+  const user = req.user!;
+  if (user.role !== 'GRIEVANCE_CELL' && user.role !== 'OFFICER' && user.role !== 'ADMIN') {
+    res.status(403).json({ error: 'Forbidden', detail: 'Only staff can generate an AI grievance synopsis.' });
+    return;
+  }
+
+  const db = loadDatabase();
+  const grievance = db.grievances.find((g) => g.public_id === req.params.public_id);
+  if (!grievance || !checkGrievanceAccess(user, grievance)) {
+    res.status(404).json({ error: 'Not Found', detail: 'Complaint not found.' });
+    return;
+  }
+
+  const cat = db.categories.find((c) => c.id === grievance.category_id);
+  const dept = db.departments.find((d) => d.id === grievance.department_id);
+  const student = db.users.find((u) => u.id === grievance.student_id);
+  const sla = calculateSla(grievance);
+
+  let history = db.status_history.filter((h) => h.grievance_id === grievance.id);
+  history.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  const summary = await summarizeGrievanceHistoryWithGemini({
+    display_no: grievance.display_no,
+    summary: grievance.summary,
+    description: grievance.description,
+    category: cat?.name || 'General',
+    department: dept?.name || 'Central Administration',
+    priority: grievance.priority,
+    status: grievance.status,
+    location: grievance.location,
+    student_name: student?.name || 'Student',
+    sla_status: sla.status,
+    sla_label: sla.label,
+    due_at: grievance.due_at,
+    timeline: history.map((h) => ({
+      status: h.status,
+      kind: h.kind,
+      note: h.note,
+      actor_name: h.actor_name,
+      actor_role: h.actor_role,
+      created_at: h.created_at,
+    })),
+  });
+
+  res.json(summary);
 });
 
 // ==========================================

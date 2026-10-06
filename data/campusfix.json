@@ -1,0 +1,634 @@
+{
+  "colleges": [
+    {
+      "id": 1,
+      "name": "Nutan Maharashtra Institute of Engineering & Technology",
+      "display_name": "NMIET",
+      "created_at": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Pimpri Chinchwad College of Engineering",
+      "display_name": "College B",
+      "created_at": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "departments": [
+    {
+      "id": 1,
+      "college_id": 1,
+      "name": "Electrical Maintenance",
+      "code": "ELEC"
+    },
+    {
+      "id": 2,
+      "college_id": 1,
+      "name": "IT Services & Network",
+      "code": "IT"
+    },
+    {
+      "id": 3,
+      "college_id": 1,
+      "name": "Civil & Sanitation",
+      "code": "CIVIL"
+    },
+    {
+      "id": 4,
+      "college_id": 1,
+      "name": "Hostel Administration",
+      "code": "HOSTEL"
+    },
+    {
+      "id": 5,
+      "college_id": 1,
+      "name": "Security & Safety",
+      "code": "SEC"
+    },
+    {
+      "id": 6,
+      "college_id": 1,
+      "name": "Transport & Facilities",
+      "code": "TRANS"
+    },
+    {
+      "id": 7,
+      "college_id": 1,
+      "name": "Grievance Cell",
+      "code": "CELL"
+    },
+    {
+      "id": 8,
+      "college_id": 2,
+      "name": "Electrical Maintenance",
+      "code": "ELEC"
+    },
+    {
+      "id": 9,
+      "college_id": 2,
+      "name": "IT Services & Network",
+      "code": "IT"
+    },
+    {
+      "id": 10,
+      "college_id": 2,
+      "name": "Civil & Sanitation",
+      "code": "CIVIL"
+    },
+    {
+      "id": 11,
+      "college_id": 2,
+      "name": "Hostel Administration",
+      "code": "HOSTEL"
+    },
+    {
+      "id": 12,
+      "college_id": 2,
+      "name": "Grievance Cell",
+      "code": "CELL"
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "college_id": 1,
+      "name": "Electrical",
+      "department_id": 1
+    },
+    {
+      "id": 2,
+      "college_id": 1,
+      "name": "IT Services",
+      "department_id": 2
+    },
+    {
+      "id": 3,
+      "college_id": 1,
+      "name": "Wi-Fi / Lab",
+      "department_id": 2
+    },
+    {
+      "id": 4,
+      "college_id": 1,
+      "name": "Water / Civil",
+      "department_id": 3
+    },
+    {
+      "id": 5,
+      "college_id": 1,
+      "name": "Sanitation",
+      "department_id": 3
+    },
+    {
+      "id": 6,
+      "college_id": 1,
+      "name": "Hostel",
+      "department_id": 4
+    },
+    {
+      "id": 7,
+      "college_id": 1,
+      "name": "Classroom / Facilities",
+      "department_id": 3
+    },
+    {
+      "id": 8,
+      "college_id": 1,
+      "name": "Cleanliness",
+      "department_id": 3
+    },
+    {
+      "id": 9,
+      "college_id": 1,
+      "name": "Security",
+      "department_id": 5
+    },
+    {
+      "id": 10,
+      "college_id": 1,
+      "name": "Transport",
+      "department_id": 6
+    },
+    {
+      "id": 11,
+      "college_id": 1,
+      "name": "Other",
+      "department_id": 7
+    },
+    {
+      "id": 12,
+      "college_id": 2,
+      "name": "Electrical",
+      "department_id": 8
+    },
+    {
+      "id": 13,
+      "college_id": 2,
+      "name": "IT Services",
+      "department_id": 9
+    },
+    {
+      "id": 14,
+      "college_id": 2,
+      "name": "Water / Civil",
+      "department_id": 10
+    },
+    {
+      "id": 15,
+      "college_id": 2,
+      "name": "Hostel",
+      "department_id": 11
+    },
+    {
+      "id": 16,
+      "college_id": 2,
+      "name": "Other",
+      "department_id": 12
+    }
+  ],
+  "sla_rules": [
+    {
+      "id": 1,
+      "college_id": 1,
+      "priority": "Critical",
+      "hours": 24
+    },
+    {
+      "id": 2,
+      "college_id": 1,
+      "priority": "High",
+      "hours": 48
+    },
+    {
+      "id": 3,
+      "college_id": 1,
+      "priority": "Medium",
+      "hours": 72
+    },
+    {
+      "id": 4,
+      "college_id": 1,
+      "priority": "Low",
+      "hours": 168
+    },
+    {
+      "id": 5,
+      "college_id": 2,
+      "priority": "Critical",
+      "hours": 24
+    },
+    {
+      "id": 6,
+      "college_id": 2,
+      "priority": "High",
+      "hours": 48
+    },
+    {
+      "id": 7,
+      "college_id": 2,
+      "priority": "Medium",
+      "hours": 72
+    },
+    {
+      "id": 8,
+      "college_id": 2,
+      "priority": "Low",
+      "hours": 168
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "email": "student@nmiet.demo",
+      "password_hash": "$2b$10$E1.8SU/EjgpkrRoHvSfCUu5iaf.IN2ZZibzH3UENaOO95XhISIhlS",
+      "name": "Saif Patil",
+      "role": "STUDENT",
+      "college_id": 1,
+      "department_id": null,
+      "academic_department": "Computer Engineering",
+      "year": "TE",
+      "division": "Div B",
+      "roll_no": "42",
+      "phone": "+91 98220 44910",
+      "created_at": "2024-10-01T08:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "email": "officer@nmiet.demo",
+      "password_hash": "$2b$10$E1.8SU/EjgpkrRoHvSfCUu5iaf.IN2ZZibzH3UENaOO95XhISIhlS",
+      "name": "Santosh Shinde",
+      "role": "OFFICER",
+      "college_id": 1,
+      "department_id": 1,
+      "academic_department": null,
+      "year": null,
+      "division": null,
+      "roll_no": null,
+      "phone": "+91 98221 11223",
+      "created_at": "2024-10-01T08:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "email": "cell@nmiet.demo",
+      "password_hash": "$2b$10$E1.8SU/EjgpkrRoHvSfCUu5iaf.IN2ZZibzH3UENaOO95XhISIhlS",
+      "name": "Dr. S. K. Joshi",
+      "role": "GRIEVANCE_CELL",
+      "college_id": 1,
+      "department_id": 7,
+      "academic_department": null,
+      "year": null,
+      "division": null,
+      "roll_no": null,
+      "phone": "+91 98223 33445",
+      "created_at": "2024-10-01T08:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "email": "it.officer@nmiet.demo",
+      "password_hash": "$2b$10$E1.8SU/EjgpkrRoHvSfCUu5iaf.IN2ZZibzH3UENaOO95XhISIhlS",
+      "name": "R. K. Nair",
+      "role": "OFFICER",
+      "college_id": 1,
+      "department_id": 2,
+      "academic_department": null,
+      "year": null,
+      "division": null,
+      "roll_no": null,
+      "phone": "+91 98224 44556",
+      "created_at": "2024-10-01T08:00:00.000Z"
+    },
+    {
+      "id": 5,
+      "email": "civil.officer@nmiet.demo",
+      "password_hash": "$2b$10$E1.8SU/EjgpkrRoHvSfCUu5iaf.IN2ZZibzH3UENaOO95XhISIhlS",
+      "name": "Sunil Gaikwad",
+      "role": "OFFICER",
+      "college_id": 1,
+      "department_id": 3,
+      "academic_department": null,
+      "year": null,
+      "division": null,
+      "roll_no": null,
+      "phone": "+91 98225 55667",
+      "created_at": "2024-10-01T08:00:00.000Z"
+    },
+    {
+      "id": 6,
+      "email": "student@collegeb.demo",
+      "password_hash": "$2b$10$E1.8SU/EjgpkrRoHvSfCUu5iaf.IN2ZZibzH3UENaOO95XhISIhlS",
+      "name": "Aarav Sharma",
+      "role": "STUDENT",
+      "college_id": 2,
+      "department_id": null,
+      "academic_department": "Mechanical Engineering",
+      "year": "SE",
+      "division": "Div A",
+      "roll_no": "18",
+      "phone": "+91 98111 22334",
+      "created_at": "2024-10-01T08:00:00.000Z"
+    },
+    {
+      "id": 7,
+      "email": "officer@collegeb.demo",
+      "password_hash": "$2b$10$E1.8SU/EjgpkrRoHvSfCUu5iaf.IN2ZZibzH3UENaOO95XhISIhlS",
+      "name": "Mahesh Deshmukh",
+      "role": "OFFICER",
+      "college_id": 2,
+      "department_id": 8,
+      "academic_department": null,
+      "year": null,
+      "division": null,
+      "roll_no": null,
+      "phone": "+91 98112 33445",
+      "created_at": "2024-10-01T08:00:00.000Z"
+    },
+    {
+      "id": 8,
+      "email": "cell@collegeb.demo",
+      "password_hash": "$2b$10$E1.8SU/EjgpkrRoHvSfCUu5iaf.IN2ZZibzH3UENaOO95XhISIhlS",
+      "name": "Prof. V. N. Patil",
+      "role": "GRIEVANCE_CELL",
+      "college_id": 2,
+      "department_id": 12,
+      "academic_department": null,
+      "year": null,
+      "division": null,
+      "roll_no": null,
+      "phone": "+91 98113 44556",
+      "created_at": "2024-10-01T08:00:00.000Z"
+    }
+  ],
+  "grievances": [
+    {
+      "id": 1,
+      "public_id": "cf-00124-nmiet-8a7b",
+      "display_no": "CF-00124",
+      "college_id": 1,
+      "student_id": 1,
+      "description": "Hallway is completely pitch black. Two students tripped yesterday near the fire reel during evening roll call. Tube lights have been flickering since yesterday evening and completely went dark around 9 PM. Urgent fix needed as it is right beside the fire exit.",
+      "summary": "No light in Hostel B corridor, dangerous trip hazard",
+      "category_id": 1,
+      "department_id": 1,
+      "priority": "High",
+      "location": "Hostel B, 2nd Floor, East Wing near Staircase 2",
+      "status": "IN_PROGRESS",
+      "due_at": "2026-10-07T05:22:24.650Z",
+      "created_at": "2026-10-05T05:22:24.650Z",
+      "resolved_at": null,
+      "assigned_to_id": 2,
+      "assigned_to_name": "Santosh Shinde (Shift B)",
+      "resolution_note": null
+    },
+    {
+      "id": 2,
+      "public_id": "cf-00118-nmiet-9b8c",
+      "display_no": "CF-00118",
+      "college_id": 1,
+      "student_id": 1,
+      "description": "Gateway IP failure during DBMS practical test. Access point restarted and DNS cache flushed by System Admin. All workstations are now connecting reliably.",
+      "summary": "Wi-Fi not working in Computer Lab 204",
+      "category_id": 2,
+      "department_id": 2,
+      "priority": "Medium",
+      "location": "Computer Lab 204, Main Building",
+      "status": "RESOLVED",
+      "due_at": "2026-10-05T03:22:24.650Z",
+      "created_at": "2026-10-04T21:22:24.650Z",
+      "resolved_at": "2026-10-05T03:22:24.650Z",
+      "assigned_to_id": 4,
+      "assigned_to_name": "R. K. Nair",
+      "resolution_note": "Gateway IP renewed and DNS cache flushed. Access point tested at 100 Mbps."
+    },
+    {
+      "id": 3,
+      "public_id": "cf-00110-nmiet-4c3d",
+      "display_no": "CF-00110",
+      "college_id": 1,
+      "student_id": 1,
+      "description": "Continuous water overflow spreading to corridor tiles creating a slipping hazard near staircase on ground floor of Block C.",
+      "summary": "Water leakage near Block C washroom",
+      "category_id": 4,
+      "department_id": 3,
+      "priority": "High",
+      "location": "Block C (Ground Floor near Washroom)",
+      "status": "ASSIGNED",
+      "due_at": "2026-10-06T01:22:24.650Z",
+      "created_at": "2026-10-04T01:22:24.650Z",
+      "resolved_at": null,
+      "assigned_to_id": 5,
+      "assigned_to_name": "Sunil Gaikwad",
+      "resolution_note": null
+    },
+    {
+      "id": 4,
+      "public_id": "cf-00092-nmiet-2e1f",
+      "display_no": "CF-00092",
+      "college_id": 1,
+      "student_id": 1,
+      "description": "Water pump failure in Girls Hostel D (Main overhead reservoir unpressurized). Escalated to Dean Infrastructure & Rector Office.",
+      "summary": "Water pump failure in Girls Hostel D",
+      "category_id": 4,
+      "department_id": 3,
+      "priority": "Critical",
+      "location": "Girls Hostel D, Pump House",
+      "status": "ESCALATED",
+      "due_at": "2026-10-05T13:22:24.650Z",
+      "created_at": "2026-10-04T13:22:24.650Z",
+      "resolved_at": null,
+      "assigned_to_id": 5,
+      "assigned_to_name": "Sunil Gaikwad",
+      "resolution_note": null
+    },
+    {
+      "id": 5,
+      "public_id": "cf-00126-nmiet-5f6g",
+      "display_no": "CF-00126",
+      "college_id": 1,
+      "student_id": 1,
+      "description": "Projector optical failure in Mech Seminar Hall during guest lecture setup. Faculty urgent request.",
+      "summary": "Projector optical failure in Mech Seminar Hall",
+      "category_id": 2,
+      "department_id": 2,
+      "priority": "Critical",
+      "location": "Mechanical Seminar Hall, Ground Floor",
+      "status": "SUBMITTED",
+      "due_at": "2026-10-06T20:22:24.650Z",
+      "created_at": "2026-10-05T20:22:24.650Z",
+      "resolved_at": null,
+      "assigned_to_id": null,
+      "assigned_to_name": null,
+      "resolution_note": null
+    },
+    {
+      "id": 6,
+      "public_id": "cf-99001-collb-1a2b",
+      "display_no": "CF-99001",
+      "college_id": 2,
+      "student_id": 6,
+      "description": "Air conditioning unit not cooling in workshop seminar room.",
+      "summary": "AC malfunctioning in College B Seminar Room",
+      "category_id": 12,
+      "department_id": 8,
+      "priority": "Medium",
+      "location": "College B Workshop Block",
+      "status": "ASSIGNED",
+      "due_at": "2026-10-07T13:22:24.650Z",
+      "created_at": "2026-10-05T13:22:24.650Z",
+      "resolved_at": null,
+      "assigned_to_id": 7,
+      "assigned_to_name": "Mahesh Deshmukh",
+      "resolution_note": null
+    }
+  ],
+  "ai_analyses": [],
+  "status_history": [
+    {
+      "id": 1,
+      "grievance_id": 1,
+      "actor_id": 1,
+      "actor_name": "Saif Patil",
+      "actor_role": "STUDENT",
+      "status": "SUBMITTED",
+      "kind": "STATUS_CHANGE",
+      "note": "Complaint logged via AI portal with photo diagnostic tag #EP-902.",
+      "is_public": true,
+      "created_at": "2026-10-05T05:22:24.650Z"
+    },
+    {
+      "id": 2,
+      "grievance_id": 1,
+      "actor_id": 3,
+      "actor_name": "Mr. R. V. Kulkarni (Estate)",
+      "actor_role": "GRIEVANCE_CELL",
+      "status": "ASSIGNED",
+      "kind": "STATUS_CHANGE",
+      "note": "Routed to Electrical Maintenance. Assigned to lead technician Santosh Shinde (Shift B).",
+      "is_public": true,
+      "created_at": "2026-10-05T06:22:24.650Z"
+    },
+    {
+      "id": 3,
+      "grievance_id": 1,
+      "actor_id": 2,
+      "actor_name": "Santosh Shinde (Tech)",
+      "actor_role": "OFFICER",
+      "status": null,
+      "kind": "INTERNAL_REMARK",
+      "note": "Instructed Santosh to check circuit breaker at Sub-Panel B2 as recurring trips occurred last week.",
+      "is_public": false,
+      "created_at": "2026-10-05T07:22:24.650Z"
+    },
+    {
+      "id": 4,
+      "grievance_id": 1,
+      "actor_id": 2,
+      "actor_name": "Santosh Shinde (Tech)",
+      "actor_role": "OFFICER",
+      "status": "IN_PROGRESS",
+      "kind": "STATUS_CHANGE",
+      "note": "Inspection scheduled. Replacement LED tube fixtures requisitioned from stores. Line fuse check underway. Store Slip #ES-4412 issued.",
+      "is_public": true,
+      "created_at": "2026-10-05T09:22:24.650Z"
+    },
+    {
+      "id": 5,
+      "grievance_id": 1,
+      "actor_id": 2,
+      "actor_name": "Santosh Shinde (Tech)",
+      "actor_role": "OFFICER",
+      "status": null,
+      "kind": "PUBLIC_UPDATE",
+      "note": "Maintenance team is on-site at Hostel B. Replaced 4 faulty LED electronic ballasts damaged by moisture.",
+      "is_public": true,
+      "created_at": "2026-10-05T18:22:24.650Z"
+    },
+    {
+      "id": 6,
+      "grievance_id": 4,
+      "actor_id": 5,
+      "actor_name": "Sunil Gaikwad",
+      "actor_role": "OFFICER",
+      "status": "ESCALATED",
+      "kind": "STATUS_CHANGE",
+      "note": "Complaint has remained unattended beyond expected SLA due to vendor supply chain delay.",
+      "is_public": false,
+      "created_at": "2026-10-05T11:22:24.650Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "grievance_id": 1,
+      "public_id": "cf-00124-nmiet-8a7b",
+      "display_no": "CF-00124",
+      "message": "Complaint CF-00124 is now in progress. Technician is on-site at Hostel B.",
+      "read": false,
+      "created_at": "2026-10-05T20:37:24.650Z"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "grievance_id": 1,
+      "public_id": "cf-00124-nmiet-8a7b",
+      "display_no": "CF-00124",
+      "message": "Your complaint CF-00124 has been assigned to Electrical Maintenance department.",
+      "read": false,
+      "created_at": "2026-10-05T19:22:24.650Z"
+    },
+    {
+      "id": 3,
+      "user_id": 1,
+      "grievance_id": 2,
+      "public_id": "cf-00118-nmiet-9b8c",
+      "display_no": "CF-00118",
+      "message": "Your complaint CF-00118 (Wi-Fi in Lab 204) has been resolved.",
+      "read": true,
+      "created_at": "2026-10-05T03:22:24.650Z"
+    },
+    {
+      "id": 4,
+      "user_id": 1,
+      "grievance_id": 4,
+      "public_id": "cf-00092-nmiet-2e1f",
+      "display_no": "CF-00092",
+      "message": "Complaint CF-00092 has been escalated to the grievance cell due to SLA timeout.",
+      "read": true,
+      "created_at": "2026-10-04T15:22:24.650Z"
+    },
+    {
+      "id": 5,
+      "user_id": 2,
+      "grievance_id": 1,
+      "public_id": "cf-00124-nmiet-8a7b",
+      "display_no": "CF-00124",
+      "message": "New high-priority ticket CF-00124 assigned to Electrical Maintenance.",
+      "read": false,
+      "created_at": "2026-10-05T06:22:24.650Z"
+    }
+  ],
+  "attachments": [
+    {
+      "id": 1,
+      "grievance_id": 1,
+      "uploaded_by": 1,
+      "file_path": "hostel_corridor_night.jpg",
+      "file_name": "hallway_dark.jpg",
+      "file_type": "image/jpeg",
+      "file_size": 142000,
+      "created_at": "2026-10-05T05:22:24.650Z"
+    }
+  ],
+  "counters": {
+    "user_id": 9,
+    "department_id": 13,
+    "category_id": 17,
+    "grievance_id": 7,
+    "status_history_id": 7,
+    "notification_id": 6,
+    "attachment_id": 2,
+    "display_no_counter": {
+      "1": 127,
+      "2": 2
+    }
+  }
+}

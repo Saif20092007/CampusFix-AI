@@ -9,11 +9,8 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
     col_id = user.college_id
     now = datetime.utcnow()
 
-    # Query all college categories and departments
     categories = db.query(Category).filter(Category.college_id == col_id).all()
     departments = db.query(Department).filter(Department.college_id == col_id).all()
-
-    # Query all grievances in college
     grievances = db.query(Grievance).filter(Grievance.college_id == col_id).all()
 
     total = len(grievances)
@@ -22,7 +19,6 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
         department_counts = {d.name: 0 for d in departments}
         priority_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0}
 
-        # 30 day empty trend
         trend = []
         for i in range(29, -1, -1):
             d = (now - timedelta(days=i)).date()
@@ -47,7 +43,6 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
             trend=trend,
         )
 
-    # Convert grievances to Pandas DataFrame
     records = []
     cat_map = {c.id: c.name for c in categories}
     dept_map = {d.id: d.name for d in departments}
@@ -75,10 +70,14 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
     overdue_mask = (df["status"] != "RESOLVED") & (df["due_at"] < now)
     overdue = int(overdue_mask.sum())
 
-    # Due soon count (non-resolved where 0 <= due_at - now < 6 hours)
-    six_hours_later = now + timedelta(hours=6)
-    due_soon_mask = (df["status"] != "RESOLVED") & (df["due_at"] >= now) & (df["due_at"] <= six_hours_later)
-    due_soon = int(due_soon_mask.sum())
+    # Due soon count (non-resolved where 0 <= due_at - now < 6-42h based on priority threshold)
+    due_soon_count = 0
+    for g in grievances:
+        if g.status != "RESOLVED":
+            diff_hours = (g.due_at - now).total_seconds() / 3600.0
+            threshold = 6 if g.priority == "Critical" else (12 if g.priority == "High" else (18 if g.priority == "Medium" else 42))
+            if 0 <= diff_hours <= threshold:
+                due_soon_count += 1
 
     # Category counts
     cat_counts_series = df["category_name"].value_counts()
@@ -126,7 +125,7 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
         escalated=escalated,
         resolved=resolved,
         overdue=overdue,
-        due_soon=due_soon,
+        due_soon=due_soon_count,
         sla_compliance=sla_compliance,
         category_counts=category_counts,
         department_counts=department_counts,

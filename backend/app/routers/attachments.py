@@ -1,7 +1,7 @@
 import os
-import uuid
 import secrets
 from pathlib import Path
+from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.orm import Session
 from PIL import Image
@@ -39,7 +39,7 @@ async def upload_photo(
             detail="Please upload a JPG, PNG or WEBP image under 3 MB."
         )
 
-    # Read contents and check size
+    # Read contents and check size limit (3 MB)
     contents = await photo.read()
     file_size = len(contents)
     if file_size > MAX_FILE_SIZE:
@@ -48,32 +48,46 @@ async def upload_photo(
             detail="File size exceeds 3 MB limit."
         )
 
-    # Pillow inspection to verify valid image
+    # Pillow inspection to verify valid image content & strip EXIF metadata for privacy
     try:
-        from io import BytesIO
+        raw_img = Image.open(BytesIO(contents))
+        raw_img.verify()  # Verify integrity
+
+        # Re-open to strip EXIF and save clean image
         img = Image.open(BytesIO(contents))
-        img.verify()
+        clean_buffer = BytesIO()
+
+        # Preserve format or convert to JPEG/PNG
+        img_format = img.format if img.format in ["JPEG", "PNG", "WEBP"] else "JPEG"
+
+        # Copy image data without metadata (EXIF/GPS stripped)
+        data = list(img.getdata())
+        clean_img = Image.new(img.mode, img.size)
+        clean_img.putdata(data)
+        clean_img.save(clean_buffer, format=img_format)
+        clean_contents = clean_buffer.getvalue()
+
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid image file format."
         )
 
-    # Generate unique filename
+    # Save clean image file with random filename
     random_hex = secrets.token_hex(8)
     unique_filename = f"{int(secrets.randbelow(1000000))}-{random_hex}{file_ext}"
     file_path = UPLOADS_DIR / unique_filename
 
     with open(file_path, "wb") as f:
-        f.write(contents)
+        f.write(clean_contents)
 
     attachment = ComplaintAttachment(
-        grievance_id=None,  # Linked upon grievance submission
+        grievance_id=None,  # Unlinked until grievance submission
         uploaded_by=current_user.id,
         file_path=unique_filename,
         file_name=photo.filename or unique_filename,
         file_type=photo.content_type or "image/jpeg",
-        file_size=file_size,
+        file_size=len(clean_contents),
     )
 
     db.add(attachment)

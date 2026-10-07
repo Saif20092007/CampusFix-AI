@@ -52,7 +52,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
           <button
             type="button"
             onClick={() => setFilter('all')}
-            className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-all min-h-[36px] flex items-center gap-1.5 ${
+            className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-all min-h-[36px] flex items-center gap-1.5 cursor-pointer ${
               filter === 'all'
                 ? 'bg-surface-container-lowest text-primary-container shadow-sm'
                 : 'text-secondary hover:text-on-surface'
@@ -67,7 +67,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
           <button
             type="button"
             onClick={() => setFilter('unread')}
-            className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-all min-h-[36px] flex items-center gap-1.5 ${
+            className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold transition-all min-h-[36px] flex items-center gap-1.5 cursor-pointer ${
               filter === 'unread'
                 ? 'bg-surface-container-lowest text-primary-container shadow-sm'
                 : 'text-secondary hover:text-on-surface'
@@ -87,7 +87,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
         <button
           type="button"
           onClick={handleMarkAllRead}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-secondary hover:text-primary-container active:scale-95 transition-all text-[12px] font-medium"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-secondary hover:text-primary-container active:scale-95 transition-all text-[12px] font-medium cursor-pointer"
         >
           <span className="material-symbols-outlined text-[16px]">done_all</span>
           <span>Mark all read</span>
@@ -163,7 +163,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
                     <div className="mt-2 flex items-center gap-2 text-[11px] text-secondary">
                       <span className="flex items-center gap-1">
                         <span className="material-symbols-outlined text-[13px]">location_on</span>
-                        <span>Hostel B / Campus</span>
+                        <span>Campus Location</span>
                       </span>
                       <span className="w-1 h-1 rounded-full bg-outline-variant"></span>
                       <span className="text-primary font-semibold hover:underline">Track Live →</span>
@@ -191,13 +191,13 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
         <button
           type="button"
           onClick={() => setShowEmptyPreview(!showEmptyPreview)}
-          className="text-[11px] font-medium text-primary-container bg-surface-container px-2.5 py-1 rounded-md active:scale-95 transition-all"
+          className="text-[11px] font-medium text-primary-container bg-surface-container px-2.5 py-1 rounded-md active:scale-95 transition-all cursor-pointer"
         >
           {showEmptyPreview ? 'Show Notification Feed' : 'Toggle Empty View'}
         </button>
       </div>
 
-      {/* Empty State View Card (Stitch Image 9) */}
+      {/* Empty State View Card */}
       {showEmptyPreview && (
         <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-surface-container flex flex-col items-center text-center transition-all animate-fade-in">
           <div className="relative mb-5">
@@ -222,14 +222,14 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
             </div>
             <div className="flex items-center gap-2 text-secondary text-[12px]">
               <span className="material-symbols-outlined text-[16px] text-primary-container">near_me</span>
-              <span>GPS tag for exact NMIET campus labs & hostels</span>
+              <span>Location routing for NMIET campus labs & hostels</span>
             </div>
           </div>
 
           <button
             type="button"
             onClick={onReportClick}
-            className="w-full h-12 bg-primary-container text-on-primary rounded-xl font-medium text-[15px] flex items-center justify-center gap-2 active:bg-primary transition-all shadow-sm"
+            className="w-full h-12 bg-primary-container text-on-primary rounded-xl font-medium text-[15px] flex items-center justify-center gap-2 active:bg-primary transition-all shadow-sm cursor-pointer"
           >
             <span className="material-symbols-outlined text-[20px]">add_circle</span>
             <span>Report an Issue</span>

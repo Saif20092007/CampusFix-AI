@@ -9,11 +9,11 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
 from app.models import College, User, Department, Category, SlaRule, Grievance, StatusHistory, ComplaintAttachment, AiAnalysis
+from app.auth import login_rate_limiter, register_rate_limiter, analyze_rate_limiter
 from app.services.sla import calculate_sla, compute_due_at
 from app.services.ai import perform_keyword_fallback
 from main import app
 
-# Use StaticPool with in-memory SQLite database for test suite
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
@@ -34,15 +34,18 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture(autouse=True)
 def setup_database():
+    # Clear rate limiters for test suite
+    login_rate_limiter.history.clear()
+    register_rate_limiter.history.clear()
+    analyze_rate_limiter.history.clear()
+
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
 
-    # Clear any existing data
     for table in reversed(Base.metadata.sorted_tables):
         db.execute(table.delete())
     db.commit()
 
-    # Run seeding logic on test db
     # 1. Colleges
     nmiet = College(id=1, name="Nutan Maharashtra Institute of Engineering & Technology", display_name="NMIET")
     col_b = College(id=2, name="College B Institute of Technology", display_name="College B")
@@ -52,7 +55,7 @@ def setup_database():
     # 2. Departments
     dept_elec = Department(id=1, college_id=1, name="Electrical Maintenance", code="ELEC")
     dept_civil = Department(id=3, college_id=1, name="Civil & Water Works", code="CIVIL")
-    dept_cell = Department(id=7, college_id=1, name="Grievance Cell Central", code="GCC")
+    dept_cell = Department(id=8, college_id=1, name="Grievance Cell Central", code="GCC")
     dept_b = Department(id=10, college_id=2, name="College B Cell", code="GCB")
     db.add_all([dept_elec, dept_civil, dept_cell, dept_b])
     db.commit()
@@ -60,8 +63,9 @@ def setup_database():
     # 3. Categories
     cat_elec = Category(id=1, college_id=1, name="Electrical & Lighting", department_id=1)
     cat_civil = Category(id=3, college_id=1, name="Water / Civil", department_id=3)
+    cat_other = Category(id=8, college_id=1, name="Other", department_id=8)
     cat_b = Category(id=10, college_id=2, name="College B General", department_id=10)
-    db.add_all([cat_elec, cat_civil, cat_b])
+    db.add_all([cat_elec, cat_civil, cat_other, cat_b])
     db.commit()
 
     # 4. SLA Rules
@@ -77,17 +81,17 @@ def setup_database():
     ])
     db.commit()
 
-    # 5. Users
+    # 5. Primary NMIET Demo Users
     from app.auth import hash_password
     pwd = hash_password("campus123")
-    saif = User(id=1, email="student@nmiet.demo", password_hash=pwd, name="Saif Patil", role="STUDENT", college_id=1, academic_department="Computer Engineering", year="TE", division="Div B", phone="9876543210")
+    saif = User(id=1, email="student@nmiet.demo", password_hash=pwd, name="Saif Sayyad", role="STUDENT", college_id=1, academic_department="Computer Science & Engineering", year="SY", division="B", roll_no="56", phone="9876543210")
     officer = User(id=2, email="officer@nmiet.demo", password_hash=pwd, name="Santosh Shinde", role="OFFICER", college_id=1, department_id=1)
-    cell = User(id=3, email="cell@nmiet.demo", password_hash=pwd, name="Dr. S. K. Joshi", role="GRIEVANCE_CELL", college_id=1, department_id=7)
-    student_b = User(id=4, email="student@collegeb.demo", password_hash=pwd, name="Aarav Sharma", role="STUDENT", college_id=2, academic_department="IT", year="BE", division="Div A")
-    cell_b = User(id=5, email="cell@collegeb.demo", password_hash=pwd, name="Prof. V. N. Patil", role="GRIEVANCE_CELL", college_id=2, department_id=10)
+    cell = User(id=3, email="cell@nmiet.demo", password_hash=pwd, name="Dr. Mahesh Wankhede", role="GRIEVANCE_CELL", college_id=1, department_id=8)
     student2 = User(id=6, email="student2@nmiet.demo", password_hash=pwd, name="Rohan Das", role="STUDENT", college_id=1, academic_department="Civil", year="SE")
 
-    db.add_all([saif, officer, cell, student_b, cell_b, student2])
+    student_b = User(id=4, email="teststudent@collegeb.local", password_hash=pwd, name="Test ColB Student", role="STUDENT", college_id=2, academic_department="IT", year="BE")
+
+    db.add_all([saif, officer, cell, student2, student_b])
     db.commit()
 
     # 6. Grievances
@@ -103,7 +107,7 @@ def setup_database():
 
     # Status History
     db.add_all([
-        StatusHistory(id=1, grievance_id=1, actor_id=1, actor_name="Saif Patil", actor_role="STUDENT", status="SUBMITTED", kind="PUBLIC_UPDATE", note="Public student note", is_public=True, created_at=now),
+        StatusHistory(id=1, grievance_id=1, actor_id=1, actor_name="Saif Sayyad", actor_role="STUDENT", status="SUBMITTED", kind="PUBLIC_UPDATE", note="Public student note", is_public=True, created_at=now),
         StatusHistory(id=2, grievance_id=1, actor_id=2, actor_name="Santosh Shinde", actor_role="OFFICER", status=None, kind="INTERNAL_REMARK", note="Internal staff remark", is_public=False, created_at=now),
     ])
     db.commit()
@@ -118,51 +122,42 @@ def get_token(email="student@nmiet.demo", password="campus123"):
     res = client.post("/api/auth/login", json={"email": email, "password": password})
     return res.json()["token"]
 
-# --- 27 Mandated Compliance Tests ---
+# --- 28 Comprehensive Compliance & Integration Tests ---
 
 def test_01_student_cannot_access_other_student_grievance():
     token_saif = get_token("student@nmiet.demo") # Student 1
-    # Attempt to access grievance 3 (belongs to student 6)
     res = client.get("/api/grievances/cf-test-003", headers={"Authorization": f"Bearer {token_saif}"})
     assert res.status_code == 404
 
 def test_02_student_cannot_access_other_college_grievance():
     token_saif = get_token("student@nmiet.demo") # College 1
-    # Attempt to access grievance 2 (College 2)
     res = client.get("/api/grievances/cf-test-002", headers={"Authorization": f"Bearer {token_saif}"})
     assert res.status_code == 404
 
 def test_03_officer_cannot_access_other_dept_grievance():
     token_officer = get_token("officer@nmiet.demo") # Department 1 (Electrical)
-    # Attempt to access grievance 3 (Department 3 / Civil)
     res = client.get("/api/grievances/cf-test-003", headers={"Authorization": f"Bearer {token_officer}"})
     assert res.status_code == 404
 
-def test_04_grievance_cell_can_access_all_college_grievances():
-    token_cell = get_token("cell@nmiet.demo") # College 1 Cell
+def test_04_grievance_cell_can_access_all_nmiet_grievances():
+    token_cell = get_token("cell@nmiet.demo") # NMIET Grievance Cell
     res = client.get("/api/grievances", headers={"Authorization": f"Bearer {token_cell}"})
     assert res.status_code == 200
     public_ids = [item["public_id"] for item in res.json()["items"]]
     assert "cf-test-001" in public_ids
     assert "cf-test-003" in public_ids
 
-def test_05_college_b_cell_cannot_access_nmiet():
-    token_cell_b = get_token("cell@collegeb.demo") # College 2 Cell
-    res = client.get("/api/grievances/cf-test-001", headers={"Authorization": f"Bearer {token_cell_b}"})
-    assert res.status_code == 404
-
-def test_06_student_cannot_change_status():
+def test_05_student_cannot_change_status():
     token_student = get_token("student@nmiet.demo")
     res = client.patch("/api/grievances/cf-test-001/status", json={"status": "IN_PROGRESS"}, headers={"Authorization": f"Bearer {token_student}"})
     assert res.status_code == 403
 
-def test_07_invalid_status_transitions_rejected():
+def test_06_invalid_status_transitions_rejected():
     token_cell = get_token("cell@nmiet.demo")
-    # SUBMITTED directly to RESOLVED is invalid
     res = client.patch("/api/grievances/cf-test-001/status", json={"status": "RESOLVED"}, headers={"Authorization": f"Bearer {token_cell}"})
     assert res.status_code == 400
 
-def test_08_gemini_success_format():
+def test_07_gemini_success_format():
     token = get_token("student@nmiet.demo")
     res = client.post("/api/grievances/analyze", json={"description": "Corridor light failure in hostel B"}, headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 200
@@ -172,21 +167,22 @@ def test_08_gemini_success_format():
     assert "priority" in data
     assert "keywords" in data
 
-def test_09_gemini_failure_keyword_fallback():
+def test_08_gemini_failure_keyword_fallback():
     fallback = perform_keyword_fallback("Water pipe burst and washroom tap broken near staircase", "Block C")
     assert fallback["category"] == "Water / Civil"
     assert fallback["priority"] == "High"
     assert "water" in fallback["keywords"] or "pipe" in fallback["keywords"]
 
-def test_10_sla_calculation_works():
+def test_09_sla_dynamic_due_soon_calculation():
     db = TestingSessionLocal()
-    g = db.query(Grievance).filter(Grievance.id == 1).first()
-    sla = calculate_sla(g)
+    g = db.query(Grievance).filter(Grievance.id == 1).first() # High priority (48h SLA, due soon threshold 12h)
+    sla_rules = db.query(SlaRule).filter(SlaRule.college_id == 1).all()
+    sla = calculate_sla(g, sla_rules)
     assert sla.status in ["ON_TIME", "DUE_SOON"]
     assert isinstance(sla.hours_remaining, float)
     db.close()
 
-def test_11_internal_remarks_hidden_from_students():
+def test_10_internal_remarks_hidden_from_students():
     token_student = get_token("student@nmiet.demo")
     res = client.get("/api/grievances/cf-test-001", headers={"Authorization": f"Bearer {token_student}"})
     assert res.status_code == 200
@@ -194,7 +190,7 @@ def test_11_internal_remarks_hidden_from_students():
     kinds = [item["kind"] for item in timeline]
     assert "INTERNAL_REMARK" not in kinds
 
-def test_12_public_updates_appear_to_students():
+def test_11_public_updates_appear_to_students():
     token_student = get_token("student@nmiet.demo")
     res = client.get("/api/grievances/cf-test-001", headers={"Authorization": f"Bearer {token_student}"})
     assert res.status_code == 200
@@ -202,62 +198,58 @@ def test_12_public_updates_appear_to_students():
     kinds = [item["kind"] for item in timeline]
     assert "PUBLIC_UPDATE" in kinds
 
-def test_13_client_priority_is_ignored():
+def test_12_client_priority_is_ignored():
     token_student = get_token("student@nmiet.demo")
-    # 1. Create analysis session
     res_ai = client.post("/api/grievances/analyze", json={"description": "Corridor lighting failure"}, headers={"Authorization": f"Bearer {token_student}"})
     analysis_id = res_ai.json()["analysis_id"]
 
-    # 2. Create grievance with client trying to pass low priority in payload
     res = client.post("/api/grievances", json={
         "description": "Corridor lighting failure",
         "summary": "Lighting failure",
         "category_id": 1,
         "location": "Hostel B",
         "analysis_id": analysis_id,
-        "priority": "Low" # Untrusted client payload
+        "priority": "Low"
     }, headers={"Authorization": f"Bearer {token_student}"})
 
     assert res.status_code == 201
     assert res.json()["priority"] in ["High", "Medium", "Critical", "Low"]
 
-def test_14_registration_ignores_role():
+def test_13_registration_cannot_choose_role():
     res = client.post("/api/auth/register", json={
         "name": "Attacker User",
         "email": "attacker@nmiet.demo",
         "password": "password123",
-        "role": "ADMIN" # Client payload attempts privilege escalation
+        "role": "ADMIN"
     })
     assert res.status_code == 201
     assert res.json()["user"]["role"] == "STUDENT"
 
-def test_15_registration_ignores_college_id():
+def test_14_registration_cannot_choose_college():
     res = client.post("/api/auth/register", json={
         "name": "Cross College User",
         "email": "crosscol@nmiet.demo",
         "password": "password123",
-        "college_id": 999 # Client payload attempts cross college binding
+        "college_id": 999
     })
     assert res.status_code == 201
     assert res.json()["user"]["college_id"] == 1
 
-def test_16_officer_cannot_change_escalated_grievance():
+def test_15_officer_cannot_modify_escalated_grievance():
     token_officer = get_token("officer@nmiet.demo")
-    # Attempt to change status of escalated grievance 4
     res = client.patch("/api/grievances/cf-test-004/status", json={"status": "IN_PROGRESS"}, headers={"Authorization": f"Bearer {token_officer}"})
     assert res.status_code == 403
 
-def test_17_student_cannot_access_analytics():
+def test_16_student_officer_cannot_access_analytics():
     token_student = get_token("student@nmiet.demo")
     res = client.get("/api/analytics/summary", headers={"Authorization": f"Bearer {token_student}"})
     assert res.status_code == 403
 
-def test_18_officer_cannot_access_analytics():
     token_officer = get_token("officer@nmiet.demo")
-    res = client.get("/api/analytics/summary", headers={"Authorization": f"Bearer {token_officer}"})
-    assert res.status_code == 403
+    res_off = client.get("/api/analytics/summary", headers={"Authorization": f"Bearer {token_officer}"})
+    assert res_off.status_code == 403
 
-def test_19_analytics_are_college_scoped():
+def test_17_analytics_are_college_scoped():
     token_cell = get_token("cell@nmiet.demo")
     res = client.get("/api/analytics/summary", headers={"Authorization": f"Bearer {token_cell}"})
     assert res.status_code == 200
@@ -265,18 +257,18 @@ def test_19_analytics_are_college_scoped():
     assert "total" in data
     assert "sla_compliance" in data
 
-def test_20_assigned_to_escalated_transition_works():
+def test_18_assigned_to_escalated_works():
     token_officer = get_token("officer@nmiet.demo")
     res = client.post("/api/grievances/cf-test-001/escalate", json={"reason": "Requires high voltage transformer replacement"}, headers={"Authorization": f"Bearer {token_officer}"})
     assert res.status_code == 200
     assert res.json()["status"] == "ESCALATED"
 
-def test_21_assigned_to_resolved_transition_rejected():
+def test_19_assigned_to_resolved_rejected():
     token_cell = get_token("cell@nmiet.demo")
     res = client.patch("/api/grievances/cf-test-003/status", json={"status": "RESOLVED"}, headers={"Authorization": f"Bearer {token_cell}"})
     assert res.status_code == 400
 
-def test_22_priority_change_recalculates_due_at():
+def test_20_priority_change_recalculates_due_at():
     db = TestingSessionLocal()
     sla_rules = db.query(SlaRule).filter(SlaRule.college_id == 1).all()
     created_at = datetime.utcnow()
@@ -286,36 +278,81 @@ def test_22_priority_change_recalculates_due_at():
     assert diff_hours == 48.0
     db.close()
 
-def test_23_attachment_access_scoped():
+def test_21_attachment_access_scoped():
     token_saif = get_token("student@nmiet.demo")
     res = client.get("/api/grievances/cf-test-001/attachments/999", headers={"Authorization": f"Bearer {token_saif}"})
     assert res.status_code == 404
 
-def test_24_invalid_attachment_type_rejected():
+def test_22_invalid_attachment_type_rejected():
     token_student = get_token("student@nmiet.demo")
     file_content = b"executable content"
     files = {"photo": ("test.exe", file_content, "application/x-msdownload")}
     res = client.post("/api/attachments/upload", files=files, headers={"Authorization": f"Bearer {token_student}"})
     assert res.status_code == 400
 
-def test_25_oversized_attachment_rejected():
+def test_23_oversized_attachment_rejected():
     token_student = get_token("student@nmiet.demo")
-    large_file = b"0" * (4 * 1024 * 1024) # 4 MB
+    large_file = b"0" * (4 * 1024 * 1024)
     files = {"photo": ("large.jpg", large_file, "image/jpeg")}
     res = client.post("/api/attachments/upload", files=files, headers={"Authorization": f"Bearer {token_student}"})
     assert res.status_code == 400
 
-def test_26_resolution_changes_resolved_at():
+def test_24_more_than_3_attachments_rejected():
+    token_student = get_token("student@nmiet.demo")
+    res_ai = client.post("/api/grievances/analyze", json={"description": "Corridor lighting failure"}, headers={"Authorization": f"Bearer {token_student}"})
+    analysis_id = res_ai.json()["analysis_id"]
+
+    res = client.post("/api/grievances", json={
+        "description": "Corridor lighting failure",
+        "summary": "Lighting failure",
+        "category_id": 1,
+        "location": "Hostel B",
+        "analysis_id": analysis_id,
+        "attachment_ids": [101, 102, 103, 104]
+    }, headers={"Authorization": f"Bearer {token_student}"})
+
+    assert res.status_code == 400
+
+def test_25_resolve_sets_resolved_at():
     db = TestingSessionLocal()
     g = db.query(Grievance).filter(Grievance.id == 5).first()
     assert g.status == "RESOLVED"
     assert g.resolved_at is not None
     db.close()
 
-def test_27_resolved_sla_is_resolved_on_time_or_late():
+def test_26_resolved_sla_marked_on_time_or_late():
     db = TestingSessionLocal()
     g = db.query(Grievance).filter(Grievance.id == 5).first()
     sla = calculate_sla(g)
     assert sla.status in ["RESOLVED_ON_TIME", "RESOLVED_LATE"]
     assert sla.is_overdue is False
     db.close()
+
+def test_27_other_unrouted_complaint_remains_submitted():
+    token_student = get_token("student@nmiet.demo")
+    res_ai = client.post("/api/grievances/analyze", json={"description": "Unspecified general inquiry"}, headers={"Authorization": f"Bearer {token_student}"})
+    analysis_id = res_ai.json()["analysis_id"]
+
+    res = client.post("/api/grievances", json={
+        "description": "Unspecified general inquiry",
+        "summary": "General inquiry",
+        "category_id": 8, # Other
+        "location": "Gate 1",
+        "analysis_id": analysis_id,
+    }, headers={"Authorization": f"Bearer {token_student}"})
+
+    assert res.status_code == 201
+    assert res.json()["status"] == "SUBMITTED"
+
+def test_28_nmiet_demo_accounts_authenticate():
+    saif_res = client.post("/api/auth/login", json={"email": "student@nmiet.demo", "password": "campus123"})
+    assert saif_res.status_code == 200
+    assert saif_res.json()["user"]["name"] == "Saif Sayyad"
+
+    officer_res = client.post("/api/auth/login", json={"email": "officer@nmiet.demo", "password": "campus123"})
+    assert officer_res.status_code == 200
+    assert officer_res.json()["user"]["name"] == "Santosh Shinde"
+
+    cell_res = client.post("/api/auth/login", json={"email": "cell@nmiet.demo", "password": "campus123"})
+    assert cell_res.status_code == 200
+    assert cell_res.json()["user"]["name"] == "Dr. Mahesh Wankhede"

@@ -77,7 +77,7 @@ export const ReportSuccess: React.FC<ReportSuccessProps> = ({
           <button
             type="button"
             onClick={handleCopy}
-            className={`min-h-[40px] px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95 flex items-center gap-1.5 ${
+            className={`min-h-[40px] px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer ${
               copied
                 ? 'bg-tertiary-fixed text-tertiary-container font-semibold'
                 : 'bg-surface-container hover:bg-surface-container-high text-primary'
@@ -123,19 +123,6 @@ export const ReportSuccess: React.FC<ReportSuccessProps> = ({
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low border border-surface-container">
-            <div className="w-9 h-9 rounded-lg bg-tertiary-fixed-dim/30 flex items-center justify-center shrink-0 mt-0.5 text-tertiary">
-              <span className="material-symbols-outlined text-[20px]">account_circle</span>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-[11px] text-secondary">Assigned Supervisor / Lead</span>
-              <span className="text-[13px] font-semibold text-on-surface truncate">
-                {grievance.assigned_to_name || 'Mr. R. V. Kulkarni'}
-              </span>
-              <span className="text-[11px] text-secondary">NMIET Central Estate Office</span>
-            </div>
-          </div>
-
           {/* SLA Timer Metric */}
           <div className="p-3.5 rounded-lg bg-surface-container flex flex-col gap-2 border border-surface-container-high">
             <div className="flex items-center justify-between">
@@ -148,16 +135,13 @@ export const ReportSuccess: React.FC<ReportSuccessProps> = ({
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[14px] font-semibold text-on-surface">{grievance.sla.label}</span>
+              <span className="text-[14px] font-semibold text-on-surface">{grievance.sla.human_text}</span>
               <span className="text-[11px] text-secondary mt-0.5">
                 Deadline: {new Date(grievance.due_at).toLocaleString('en-IN', {
                   dateStyle: 'medium',
                   timeStyle: 'short',
                 })} IST
               </span>
-            </div>
-            <div className="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden mt-1">
-              <div className="bg-primary-container h-full w-[16%] rounded-full"></div>
             </div>
           </div>
         </div>
@@ -169,30 +153,8 @@ export const ReportSuccess: React.FC<ReportSuccessProps> = ({
           notifications_active
         </span>
         <p className="text-[12px] text-secondary leading-relaxed">
-          You will receive real-time SMS alerts on your registered student mobile and app push updates whenever status changes or technician notes are filed.
+          You will receive real-time portal notifications on your account whenever status changes or staff notes are posted.
         </p>
-      </div>
-
-      {/* Resolution Pipeline */}
-      <div className="px-1">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] text-secondary font-semibold uppercase tracking-wider">
-            Resolution Pipeline
-          </span>
-          <span className="text-[11px] text-primary font-semibold">Step 2 of 4</span>
-        </div>
-        <div className="grid grid-cols-4 gap-1.5">
-          <div className="h-1.5 rounded-full bg-tertiary-container"></div>
-          <div className="h-1.5 rounded-full bg-primary-container animate-pulse"></div>
-          <div className="h-1.5 rounded-full bg-surface-container-highest"></div>
-          <div className="h-1.5 rounded-full bg-surface-container-highest"></div>
-        </div>
-        <div className="flex justify-between items-center text-[10px] text-secondary mt-1.5 px-0.5 font-medium">
-          <span className="text-tertiary-container font-semibold">Received</span>
-          <span className="text-primary font-bold">Assigned</span>
-          <span>In Repair</span>
-          <span>Verified</span>
-        </div>
       </div>
 
       {/* CTAs */}

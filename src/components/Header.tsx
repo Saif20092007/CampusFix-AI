@@ -97,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'student@nmiet.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
                 >
-                  <span>Student (Saif Patil)</span>
+                  <span>Student (Saif Sayyad)</span>
                   <span className="text-[10px] opacity-75">NMIET</span>
                 </button>
                 <button
@@ -119,34 +119,8 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'cell@nmiet.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
                 >
-                  <span>Grievance Cell (Dr. Joshi)</span>
+                  <span>Grievance Cell (Dr. Wankhede)</span>
                   <span className="text-[10px] opacity-75">Admin</span>
-                </button>
-
-                <div className="border-t border-surface-container-high my-1 pt-1 px-2 text-[11px] font-semibold text-secondary uppercase tracking-wider">
-                  College B (Multi-College)
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    switchDemoUser('student@collegeb.demo');
-                    setShowDemoMenu(false);
-                  }}
-                  className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'student@collegeb.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
-                >
-                  <span>Student (Aarav Sharma)</span>
-                  <span className="text-[10px] opacity-75">College B</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    switchDemoUser('cell@collegeb.demo');
-                    setShowDemoMenu(false);
-                  }}
-                  className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'cell@collegeb.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
-                >
-                  <span>Grievance Cell (Prof. Patil)</span>
-                  <span className="text-[10px] opacity-75">College B</span>
                 </button>
               </div>
             )}

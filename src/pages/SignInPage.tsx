@@ -93,7 +93,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. saif.patil@email.com"
+                placeholder="e.g. saif.sayyad@nmiet.demo"
                 className="w-full h-12 pl-10 pr-3 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm transition-all"
               />
             </div>
@@ -105,13 +105,6 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
               <label className="text-[12px] font-semibold text-on-surface" htmlFor="passwordInput">
                 Password
               </label>
-              <button
-                type="button"
-                onClick={() => alert('Password reset link has been dispatched to your email address.')}
-                className="text-[11px] text-primary hover:underline"
-              >
-                Forgot password?
-              </button>
             </div>
             <div className="relative flex items-center">
               <span className="material-symbols-outlined absolute left-3 text-secondary text-[20px] pointer-events-none">
@@ -190,24 +183,24 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
         {/* Quick Demo Login Grid for 3 Roles: Student, Officer, Grievance Cell */}
         <div className="mt-5 pt-4 border-t border-surface-container">
           <p className="text-[11px] font-semibold text-secondary uppercase tracking-wider text-center mb-2.5">
-            Quick Demo Accounts (password: campus123)
+            NMIET Demo Accounts (password: campus123)
           </p>
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               disabled={isSubmitting}
               onClick={() => handleQuickDemo('student@nmiet.demo')}
-              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high"
+              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high cursor-pointer"
             >
               <span className="font-semibold text-on-surface">Student</span>
-              <span className="text-[10px] text-secondary">Saif (NMIET)</span>
+              <span className="text-[10px] text-secondary">Saif Sayyad</span>
             </button>
 
             <button
               type="button"
               disabled={isSubmitting}
               onClick={() => handleQuickDemo('officer@nmiet.demo')}
-              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high"
+              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high cursor-pointer"
             >
               <span className="font-semibold text-on-surface">Officer</span>
               <span className="text-[10px] text-secondary">Electrical</span>
@@ -217,21 +210,10 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
               type="button"
               disabled={isSubmitting}
               onClick={() => handleQuickDemo('cell@nmiet.demo')}
-              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high"
+              className="p-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-center active:scale-95 transition-all text-[11px] flex flex-col items-center gap-0.5 border border-surface-container-high cursor-pointer"
             >
               <span className="font-semibold text-on-surface">Grievance Cell</span>
-              <span className="text-[10px] text-secondary">College Cell</span>
-            </button>
-          </div>
-
-          <div className="mt-2 text-center">
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleQuickDemo('cell@collegeb.demo')}
-              className="text-[11px] text-secondary hover:text-primary underline"
-            >
-              Test Multi-College (College B Cell)
+              <span className="text-[10px] text-secondary">NMIET Cell</span>
             </button>
           </div>
         </div>

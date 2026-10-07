@@ -34,7 +34,8 @@ def build_grievance_out(g: Grievance, current_user: User, db: Session) -> Grieva
     cat = db.query(Category).filter(Category.id == g.category_id).first()
     dept = db.query(Department).filter(Department.id == g.department_id).first()
     student = db.query(User).filter(User.id == g.student_id).first()
-    sla = calculate_sla(g)
+    sla_rules = db.query(SlaRule).filter(SlaRule.college_id == g.college_id).all()
+    sla = calculate_sla(g, sla_rules)
 
     # Privacy filtering for student info on list items
     student_name = None
@@ -96,12 +97,10 @@ def analyze_grievance(
             detail="Description must be at least 5 characters"
         )
 
-    # College categories
     college_categories = db.query(Category).filter(Category.college_id == current_user.college_id).all()
 
     ai_data, raw_json, fallback_used, model_name = analyze_with_gemini(trimmed, payload.location or "")
 
-    # Match category string to college category ID
     suggested_cat_str = ai_data.get("category", "").lower()
     matched_cat = next((c for c in college_categories if c.name.lower() == suggested_cat_str), None)
 
@@ -113,7 +112,6 @@ def analyze_grievance(
 
     dept = db.query(Department).filter(Department.id == matched_cat.department_id).first() if matched_cat else None
 
-    # Save AI Analysis session
     analysis_id = f"ai-{int(time.time()*1000)}-{secrets.token_hex(4)}"
     analysis_record = AiAnalysis(
         id=analysis_id,
@@ -140,7 +138,7 @@ def analyze_grievance(
         summary=ai_data.get("summary", "Reported Issue"),
         location=ai_data.get("location") or payload.location or "Campus Premise",
         keywords=ai_data.get("keywords", []),
-        department_name=dept.name if dept else "Grievance Cell",
+        department_name=dept.name if dept else "Grievance Cell Central",
         confidence=86.5 if fallback_used else 98.4,
         fallback_used=fallback_used,
     )
@@ -156,6 +154,13 @@ def create_grievance(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Missing required grievance fields"
+        )
+
+    # Enforce max 3 attachments
+    if payload.attachment_ids and len(payload.attachment_ids) > 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum 3 photo evidence attachments allowed per complaint."
         )
 
     # 1. Verify analysis session
@@ -196,32 +201,39 @@ def create_grievance(
         )
 
     department = db.query(Department).filter(Department.id == category.department_id).first()
-    department_id = department.id if department else 1
 
-    # 3. Server enforces priority from stored AI analysis (NEVER trust client priority!)
+    # Check if category is Other or routed to Grievance Cell
+    is_other_or_cell = (category.name == "Other" or not department or "Grievance Cell" in department.name)
+
+    # Grievance Cell Central fallback department
+    cell_dept = db.query(Department).filter(
+        Department.college_id == current_user.college_id,
+        Department.name.ilike("%Grievance Cell%")
+    ).first()
+
+    department_id = department.id if (department and not is_other_or_cell) else (cell_dept.id if cell_dept else 8)
+
+    # Mandated Rule: Other / unrouted complaints MUST remain SUBMITTED status
+    initial_status = "SUBMITTED" if is_other_or_cell else "ASSIGNED"
+
+    # Server enforces priority from stored AI analysis
     priority = analysis.priority
 
-    # 4. Compute due_at
     now = datetime.utcnow()
     sla_rules = db.query(SlaRule).filter(SlaRule.college_id == current_user.college_id).all()
     due_at = compute_due_at(now, priority, sla_rules)
 
-    # 5. Public ID & display_no generation
     random_hex = secrets.token_hex(4)
     public_id = f"cf-{int(now.timestamp())}-{random_hex}"
 
-    # Sequential display_no calculation per college
     total_college_grievances = db.query(Grievance).filter(Grievance.college_id == current_user.college_id).count()
     seq_no = 101 + total_college_grievances
     display_no = f"CF-{seq_no:05d}"
 
-    # Technician lookup
     tech = db.query(User).filter(
         User.college_id == current_user.college_id,
         User.department_id == department_id
-    ).first()
-
-    initial_status = "ASSIGNED" if department_id else "SUBMITTED"
+    ).first() if initial_status == "ASSIGNED" else None
 
     grievance = Grievance(
         public_id=public_id,
@@ -250,70 +262,94 @@ def create_grievance(
     # Link AI analysis
     analysis.grievance_id = grievance.id
 
-    # Link attachments
+    # Verify attachment ownership & link unused attachments
     if payload.attachment_ids:
-        db.query(ComplaintAttachment).filter(
+        # Check that attachments belong to current user and are unlinked
+        valid_attachments = db.query(ComplaintAttachment).filter(
             ComplaintAttachment.id.in_(payload.attachment_ids),
-            ComplaintAttachment.uploaded_by == current_user.id
-        ).update({"grievance_id": grievance.id}, synchronize_session=False)
+            ComplaintAttachment.uploaded_by == current_user.id,
+            ComplaintAttachment.grievance_id == None
+        ).all()
+
+        if len(valid_attachments) != len(payload.attachment_ids):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="One or more attachments are invalid, already linked, or do not belong to you."
+            )
+
+        for att in valid_attachments:
+            att.grievance_id = grievance.id
 
     # Initial status history entries
-    history_submitted = StatusHistory(
+    db.add(StatusHistory(
         grievance_id=grievance.id,
         actor_id=current_user.id,
         actor_name=current_user.name,
         actor_role=current_user.role,
         status="SUBMITTED",
         kind="STATUS_CHANGE",
-        note=f"Complaint logged by {current_user.name} via AI portal with photo diagnostic tag #{display_no[3:]}.",
+        note=f"Complaint logged by {current_user.name} via AI portal.",
         is_public=True,
         created_at=now,
-    )
-    db.add(history_submitted)
+    ))
 
     if initial_status == "ASSIGNED":
-        history_assigned = StatusHistory(
+        db.add(StatusHistory(
             grievance_id=grievance.id,
             actor_id=tech.id if tech else 1,
-            actor_name=tech.name if tech else "Estate Lead",
+            actor_name=tech.name if tech else "Service Lead",
             actor_role="GRIEVANCE_CELL",
             status="ASSIGNED",
             kind="STATUS_CHANGE",
             note=f"Routed to {department.name if department else 'Department'}. Assigned to lead technician {grievance.assigned_to_name or 'Staff'}.",
             is_public=True,
             created_at=now + timedelta(seconds=1),
-        )
-        db.add(history_assigned)
+        ))
 
-    # Notifications
-    student_notif = Notification(
+    # Student Notification
+    db.add(Notification(
         user_id=current_user.id,
         grievance_id=grievance.id,
         public_id=grievance.public_id,
         display_no=grievance.display_no,
-        message=f"Your complaint {grievance.display_no} has been assigned to {department.name if department else 'the service team'}.",
+        message=f"Your complaint {grievance.display_no} has been submitted.",
         read=False,
         created_at=now,
-    )
-    db.add(student_notif)
+    ))
 
-    # Department Officers
-    officers = db.query(User).filter(
-        User.college_id == current_user.college_id,
-        User.role == "OFFICER",
-        User.department_id == department_id
-    ).all()
-
-    for off in officers:
-        db.add(Notification(
-            user_id=off.id,
-            grievance_id=grievance.id,
-            public_id=grievance.public_id,
-            display_no=grievance.display_no,
-            message=f"New {grievance.priority}-priority ticket {grievance.display_no} assigned to {department.name if department else 'Queue'}: \"{grievance.summary}\".",
-            read=False,
-            created_at=now,
-        ))
+    # Notify department officers or Grievance Cell
+    if initial_status == "SUBMITTED":
+        # Unrouted -> Notify NMIET Grievance Cell
+        cell_users = db.query(User).filter(
+            User.college_id == current_user.college_id,
+            User.role == "GRIEVANCE_CELL"
+        ).all()
+        for cell in cell_users:
+            db.add(Notification(
+                user_id=cell.id,
+                grievance_id=grievance.id,
+                public_id=grievance.public_id,
+                display_no=grievance.display_no,
+                message=f"New unrouted complaint {grievance.display_no} requires triage assignment.",
+                read=False,
+                created_at=now,
+            ))
+    else:
+        officers = db.query(User).filter(
+            User.college_id == current_user.college_id,
+            User.role == "OFFICER",
+            User.department_id == department_id
+        ).all()
+        for off in officers:
+            db.add(Notification(
+                user_id=off.id,
+                grievance_id=grievance.id,
+                public_id=grievance.public_id,
+                display_no=grievance.display_no,
+                message=f"New {grievance.priority}-priority ticket {grievance.display_no} assigned to queue.",
+                read=False,
+                created_at=now,
+            ))
 
     db.commit()
 
@@ -367,13 +403,11 @@ def get_grievances(
         )
 
     all_matches = query.order_by(Grievance.created_at.desc()).all()
+    sla_rules = db.query(SlaRule).filter(SlaRule.college_id == current_user.college_id).all()
 
-    # Pre-build list and apply SLA filtering if specified
     items = []
-    now = datetime.utcnow()
-
     for g in all_matches:
-        sla = calculate_sla(g)
+        sla = calculate_sla(g, sla_rules)
 
         if sla_filter and sla_filter != "all":
             if sla_filter in ["overdue", "breached"] and (sla.status != "OVERDUE" or g.status == "RESOLVED"):
@@ -403,10 +437,8 @@ def get_grievance_detail(
     grievance = get_scoped_grievance(public_id, current_user, db)
     base_out = build_grievance_out(grievance, current_user, db)
 
-    # Timeline history
     history_query = db.query(StatusHistory).filter(StatusHistory.grievance_id == grievance.id)
 
-    # Privacy rule: Students NEVER receive internal remarks or hidden escalation notes
     if current_user.role == "STUDENT":
         history_query = history_query.filter(StatusHistory.is_public == True)
 
@@ -428,7 +460,6 @@ def get_grievance_detail(
         for h in history
     ]
 
-    # Attachments
     attachments_db = db.query(ComplaintAttachment).filter(ComplaintAttachment.grievance_id == grievance.id).all()
     attachments = [
         AttachmentInfo(
@@ -441,7 +472,6 @@ def get_grievance_detail(
         for a in attachments_db
     ]
 
-    # Student summary sub-object based on role
     student = db.query(User).filter(User.id == grievance.student_id).first()
     student_summary = None
 
@@ -460,7 +490,6 @@ def get_grievance_detail(
             phone=student.phone,
         )
 
-    # Return full detail
     return GrievanceDetailOut(
         **base_out.model_dump(),
         timeline=timeline,
@@ -478,14 +507,12 @@ def update_status(
 ):
     grievance = get_scoped_grievance(public_id, current_user, db)
 
-    # Students cannot change status (403)
     if current_user.role == "STUDENT":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Students cannot update grievance status"
         )
 
-    # Department officers cannot modify ESCALATED grievance
     if grievance.status == "ESCALATED" and current_user.role == "OFFICER":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -542,7 +569,6 @@ def update_status(
         created_at=now,
     ))
 
-    # Notify student
     notif_msg = f"Your complaint {grievance.display_no} status changed to {target_status.replace('_', ' ')}."
     if target_status == "IN_PROGRESS":
         notif_msg = f"Complaint {grievance.display_no} is now in progress. Technician is on-site at {grievance.location}."
@@ -595,7 +621,6 @@ def escalate_grievance(
     now = datetime.utcnow()
     grievance.status = "ESCALATED"
 
-    # Save internal status history (is_public = False)
     db.add(StatusHistory(
         grievance_id=grievance.id,
         actor_id=current_user.id,
@@ -604,11 +629,10 @@ def escalate_grievance(
         status="ESCALATED",
         kind="STATUS_CHANGE",
         note=payload.reason.strip(),
-        is_public=False,
+        is_public=False, # Hidden from student
         created_at=now,
     ))
 
-    # Notify student (generic message)
     db.add(Notification(
         user_id=grievance.student_id,
         grievance_id=grievance.id,
@@ -619,7 +643,6 @@ def escalate_grievance(
         created_at=now,
     ))
 
-    # Notify Grievance Cell
     cell_users = db.query(User).filter(
         User.college_id == current_user.college_id,
         User.role == "GRIEVANCE_CELL"
@@ -683,7 +706,6 @@ def assign_grievance(
         created_at=now,
     ))
 
-    # Notify new department officers
     officers = db.query(User).filter(
         User.college_id == current_user.college_id,
         User.role == "OFFICER",
@@ -732,7 +754,6 @@ def update_priority(
     old_priority = grievance.priority
     grievance.priority = payload.priority
 
-    # Recalculate SLA due_at
     sla_rules = db.query(SlaRule).filter(SlaRule.college_id == current_user.college_id).all()
     grievance.due_at = compute_due_at(grievance.created_at, payload.priority, sla_rules)
 
@@ -772,7 +793,6 @@ def add_remark(
 
     now = datetime.utcnow()
 
-    # Students always post PUBLIC_UPDATE
     if current_user.role == "STUDENT":
         history = StatusHistory(
             grievance_id=grievance.id,
@@ -790,7 +810,6 @@ def add_remark(
         db.refresh(history)
         return history
 
-    # Staff
     is_public = (payload.kind == "PUBLIC_UPDATE")
     history = StatusHistory(
         grievance_id=grievance.id,

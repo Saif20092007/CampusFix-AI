@@ -20,9 +20,9 @@ def seed_db():
             print("Database already seeded.")
             return
 
-        print("Seeding database...")
+        print("Seeding NMIET database...")
 
-        # 1. Colleges
+        # 1. Primary NMIET College (Keep College B entry in DB for schema multi-tenancy, but NO College B demo accounts/seed)
         nmiet = College(
             id=1,
             name="Nutan Maharashtra Institute of Engineering & Technology",
@@ -30,13 +30,13 @@ def seed_db():
         )
         college_b = College(
             id=2,
-            name="College B Institute of Technology",
+            name="College B Institute of Technology (Future Tenant)",
             display_name="College B"
         )
         db.add_all([nmiet, college_b])
         db.commit()
 
-        # 2. Departments
+        # 2. Service Departments (NMIET)
         nmiet_depts = [
             Department(id=1, college_id=1, name="Electrical Maintenance", code="ELEC"),
             Department(id=2, college_id=1, name="IT Services & Network", code="ITS"),
@@ -44,35 +44,27 @@ def seed_db():
             Department(id=4, college_id=1, name="Hostel Administration", code="HOSTEL"),
             Department(id=5, college_id=1, name="Sanitation & Housekeeping", code="SANI"),
             Department(id=6, college_id=1, name="Campus Security", code="SEC"),
-            Department(id=7, college_id=1, name="Grievance Cell Central", code="GCC"),
+            Department(id=7, college_id=1, name="Transport", code="TRANS"),
+            Department(id=8, college_id=1, name="Grievance Cell Central", code="GCC"),
         ]
-        college_b_depts = [
-            Department(id=8, college_id=2, name="Electrical & Energy", code="EE"),
-            Department(id=9, college_id=2, name="IT Infrastructure", code="ITI"),
-            Department(id=10, college_id=2, name="Grievance Cell", code="GCB"),
-        ]
-        db.add_all(nmiet_depts + college_b_depts)
+        db.add_all(nmiet_depts)
         db.commit()
 
-        # 3. Categories
+        # 3. Categories (NMIET)
         nmiet_cats = [
             Category(id=1, college_id=1, name="Electrical & Lighting", department_id=1),
             Category(id=2, college_id=1, name="Network & Wi-Fi", department_id=2),
             Category(id=3, college_id=1, name="Water / Civil", department_id=3),
             Category(id=4, college_id=1, name="Hostel Facilities", department_id=4),
             Category(id=5, college_id=1, name="Sanitation & Cleanliness", department_id=5),
-            Category(id=6, college_id=1, name="Security & Parking", department_id=6),
-            Category(id=7, college_id=1, name="Other", department_id=7),
+            Category(id=6, college_id=1, name="Security & Safety", department_id=6),
+            Category(id=7, college_id=1, name="Transport & Parking", department_id=7),
+            Category(id=8, college_id=1, name="Other", department_id=8),
         ]
-        college_b_cats = [
-            Category(id=8, college_id=2, name="Electrical Issues", department_id=8),
-            Category(id=9, college_id=2, name="Wi-Fi & Labs", department_id=9),
-            Category(id=10, college_id=2, name="General Infrastructure", department_id=10),
-        ]
-        db.add_all(nmiet_cats + college_b_cats)
+        db.add_all(nmiet_cats)
         db.commit()
 
-        # 4. SLA Rules
+        # 4. SLA Rules (NMIET & College B)
         sla_rules = [
             SlaRule(college_id=1, priority="Critical", hours=24),
             SlaRule(college_id=1, priority="High", hours=48),
@@ -86,23 +78,25 @@ def seed_db():
         db.add_all(sla_rules)
         db.commit()
 
-        # 5. Demo Users
+        # 5. Demo Users (NMIET ONLY)
         password_hash = hash_password("campus123")
         users = [
+            # Student: Saif Sayyad (SY CSE, Division B, Roll 56)
             User(
                 id=1,
                 email="student@nmiet.demo",
                 password_hash=password_hash,
-                name="Saif Patil",
+                name="Saif Sayyad",
                 role="STUDENT",
                 college_id=1,
                 department_id=None,
-                academic_department="Computer Engineering",
-                year="TE",
-                division="Div B",
-                roll_no="42",
+                academic_department="Computer Science & Engineering",
+                year="SY",
+                division="B",
+                roll_no="56",
                 phone="9876543210"
             ),
+            # Officer: Santosh Shinde (Electrical Maintenance)
             User(
                 id=2,
                 email="officer@nmiet.demo",
@@ -110,66 +104,39 @@ def seed_db():
                 name="Santosh Shinde",
                 role="OFFICER",
                 college_id=1,
-                department_id=1, # Electrical
+                department_id=1, # Electrical Maintenance
                 academic_department=None,
                 year=None,
                 division=None,
                 roll_no=None,
                 phone="9822001122"
             ),
+            # Grievance Cell: Dr. Mahesh Wankhede (Grievance Cell Central)
             User(
                 id=3,
                 email="cell@nmiet.demo",
                 password_hash=password_hash,
-                name="Dr. S. K. Joshi",
+                name="Dr. Mahesh Wankhede",
                 role="GRIEVANCE_CELL",
                 college_id=1,
-                department_id=7, # Grievance Cell
+                department_id=8, # Grievance Cell Central
                 academic_department=None,
                 year=None,
                 division=None,
                 roll_no=None,
                 phone="9822003344"
-            ),
-            User(
-                id=4,
-                email="student@collegeb.demo",
-                password_hash=password_hash,
-                name="Aarav Sharma",
-                role="STUDENT",
-                college_id=2,
-                department_id=None,
-                academic_department="Information Technology",
-                year="BE",
-                division="Div A",
-                roll_no="12",
-                phone="9111223344"
-            ),
-            User(
-                id=5,
-                email="cell@collegeb.demo",
-                password_hash=password_hash,
-                name="Prof. V. N. Patil",
-                role="GRIEVANCE_CELL",
-                college_id=2,
-                department_id=10,
-                academic_department=None,
-                year=None,
-                division=None,
-                roll_no=None,
-                phone="9111556677"
             )
         ]
         db.add_all(users)
         db.commit()
 
-        # 6. Sample Grievances for NMIET & College B
+        # 6. Sample NMIET Grievances
         now = datetime.utcnow()
 
-        # Grievance 1: Saif's Electrical issue
+        # Grievance 1: Saif's Electrical complaint (In Progress)
         g1 = Grievance(
             id=1,
-            public_id="cf-demo-nmiet-001",
+            public_id="cf-nmiet-001",
             display_no="CF-00101",
             college_id=1,
             student_id=1,
@@ -188,15 +155,15 @@ def seed_db():
             resolution_note=None
         )
 
-        # Grievance 2: Saif's Water issue
+        # Grievance 2: Saif's Water complaint (Assigned)
         g2 = Grievance(
             id=2,
-            public_id="cf-demo-nmiet-002",
+            public_id="cf-nmiet-002",
             display_no="CF-00102",
             college_id=1,
             student_id=1,
-            description="Water pipeline burst near civil lab block staircase causing flooding on the ground floor walkway.",
-            summary="Water pipe burst near Civil Lab",
+            description="Water pipeline leak near Civil Lab block causing water accumulation on the walkway.",
+            summary="Water pipe leak near Civil Lab",
             category_id=3,
             department_id=3,
             priority="Critical",
@@ -210,10 +177,10 @@ def seed_db():
             resolution_note=None
         )
 
-        # Grievance 3: Resolved grievance
+        # Grievance 3: Saif's Resolved complaint
         g3 = Grievance(
             id=3,
-            public_id="cf-demo-nmiet-003",
+            public_id="cf-nmiet-003",
             display_no="CF-00103",
             college_id=1,
             student_id=1,
@@ -232,40 +199,40 @@ def seed_db():
             resolution_note="Router replaced with dual-band access point."
         )
 
-        # Grievance 4: College B complaint
+        # Grievance 4: Unrouted / Other complaint -> Grievance Cell Central, SUBMITTED status
         g4 = Grievance(
             id=4,
-            public_id="cf-demo-colb-001",
-            display_no="CF-00201",
-            college_id=2,
-            student_id=4,
-            description="College B main auditorium air conditioner unit making loud grinding noise during lectures.",
-            summary="Auditorium AC unit noise",
-            category_id=8,
-            department_id=8,
+            public_id="cf-nmiet-004",
+            display_no="CF-00104",
+            college_id=1,
+            student_id=1,
+            description="Unspecified general request regarding inter-campus shuttle schedule.",
+            summary="Shuttle schedule query",
+            category_id=8, # Other
+            department_id=8, # Grievance Cell Central
             priority="Medium",
-            location="Main Auditorium",
-            status="ASSIGNED",
-            due_at=now + timedelta(hours=48),
-            created_at=now - timedelta(hours=4),
+            location="Campus Gate 1",
+            status="SUBMITTED", # Mandated rule: unrouted/other remains SUBMITTED
+            due_at=now + timedelta(hours=60),
+            created_at=now - timedelta(hours=2),
             resolved_at=None,
             assigned_to_id=None,
-            assigned_to_name="College B Maintenance",
+            assigned_to_name=None,
             resolution_note=None
         )
 
         db.add_all([g1, g2, g3, g4])
         db.commit()
 
-        # Status histories
+        # Status History for G1
         h1 = StatusHistory(
             grievance_id=1,
             actor_id=1,
-            actor_name="Saif Patil",
+            actor_name="Saif Sayyad",
             actor_role="STUDENT",
             status="SUBMITTED",
             kind="STATUS_CHANGE",
-            note="Complaint logged by Saif Patil via AI portal with photo diagnostic tag #00101.",
+            note="Complaint logged by Saif Sayyad via AI portal.",
             is_public=True,
             created_at=now - timedelta(hours=12)
         )
@@ -287,7 +254,7 @@ def seed_db():
             actor_role="OFFICER",
             status=None,
             kind="INTERNAL_REMARK",
-            note="Vendor invoice pending approval for high-bay LED replacement.",
+            note="Replacement fixture inventory verified.",
             is_public=False, # Internal remark
             created_at=now - timedelta(hours=4)
         )
@@ -295,7 +262,7 @@ def seed_db():
         db.add_all([h1, h2, h3])
         db.commit()
 
-        print("Database seeding completed successfully.")
+        print("NMIET database seeding completed successfully.")
 
     except Exception as e:
         print(f"Error seeding database: {e}")

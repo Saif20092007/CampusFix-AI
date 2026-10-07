@@ -192,3 +192,144 @@ export function saveAiAnalysis(userId: number, data: { result: GeminiAnalysisRes
   saveDatabase();
   return record;
 }
+
+export interface GrievanceSummaryResponse {
+  executiveSummary: string;
+  currentStatus: string;
+  timelineHighlights: string[];
+  recommendedAction: string;
+  model: string;
+  generatedAt: string;
+}
+
+export async function summarizeGrievanceHistoryWithGemini(data: {
+  display_no: string;
+  summary: string;
+  description: string;
+  category: string;
+  department: string;
+  priority: string;
+  status: string;
+  location?: string;
+  student_name?: string;
+  sla_status?: string;
+  sla_label?: string;
+  due_at?: string;
+  timeline: Array<{
+    status?: string | null;
+    kind?: string;
+    note: string;
+    actor_name: string;
+    actor_role: string;
+    created_at: string;
+  }>;
+}): Promise<GrievanceSummaryResponse> {
+  const nowIso = new Date().toISOString();
+
+  // Helper for deterministic fallback
+  const fallbackSummary = (): GrievanceSummaryResponse => {
+    const highlights = (data.timeline || []).map((t) => {
+      const timeStr = new Date(t.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      const action = t.kind === 'INTERNAL_REMARK' ? 'Staff remark' : t.status || t.kind || 'Updated';
+      return `${timeStr} - ${action} by ${t.actor_name}: "${t.note.slice(0, 80)}"`;
+    });
+
+    if (highlights.length === 0) {
+      highlights.push(`Ticket logged as ${data.priority} priority in ${data.department}.`);
+    }
+
+    let recommended = 'Monitor ticket resolution within standard department timeframe.';
+    if (data.status === 'ESCALATED') {
+      recommended = 'Review department escalation rationale and evaluate inter-department reassignment or central intervention.';
+    } else if (data.status === 'RESOLVED') {
+      recommended = 'Grievance resolved and closed. No further central intervention needed.';
+    } else if (data.sla_status === 'OVERDUE') {
+      recommended = 'SLA turnaround breached. Urgently contact department head for expediting resolution.';
+    }
+
+    return {
+      executiveSummary: `${data.display_no} reported by ${data.student_name || 'Student'} regarding ${data.category} at ${data.location || 'campus'}. Issue: ${data.summary}.`,
+      currentStatus: `Currently ${data.status} under ${data.department}. Turnaround SLA: ${data.sla_label || 'in progress'}.`,
+      timelineHighlights: highlights.slice(0, 4),
+      recommendedAction: recommended,
+      model: 'deterministic-fallback',
+      generatedAt: nowIso,
+    };
+  };
+
+  if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('MY_GEMINI_API_KEY')) {
+    return fallbackSummary();
+  }
+
+  try {
+    const ai = new GoogleGenAI({
+      apiKey: GEMINI_API_KEY,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
+
+    const timelineText = (data.timeline || [])
+      .map(
+        (t, i) =>
+          `${i + 1}. [${t.created_at}] [${t.status || t.kind}] Actor: ${t.actor_name} (${t.actor_role}): "${t.note}"`
+      )
+      .join('\n');
+
+    const prompt = `You are the CampusFix AI institutional triage assistant for the College Grievance Cell.
+Generate a concise, professional synopsis of the following grievance history and operational status for central cell staff.
+
+Grievance Details:
+- Ticket: ${data.display_no}
+- Category: ${data.category}
+- Priority: ${data.priority}
+- Current Status: ${data.status}
+- Department: ${data.department}
+- Location: ${data.location || 'Campus Premise'}
+- Student: ${data.student_name || 'Student'}
+- SLA Window: ${data.sla_label || 'Active'} (SLA Status: ${data.sla_status || 'normal'})
+- Issue Description: ${data.description}
+
+Timeline & Audit Trail:
+${timelineText || 'No timeline entries recorded yet.'}
+
+Return a valid JSON object strictly with these fields:
+- "executiveSummary": A crisp 2-sentence synopsis explaining the core complaint, location, and severity.
+- "currentStatus": 1-2 sentences on the current operational state, department ownership, and SLA urgency.
+- "timelineHighlights": An array of 2 to 4 concise strings summarizing the key sequence of events (e.g. lodging, assignment, escalations, delays).
+- "recommendedAction": A clear, pragmatic recommendation for Grievance Cell staff on next operational steps.
+
+Do NOT include any markdown code fences or explanatory text outside the JSON. Return only the JSON object.`;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Gemini API timeout')), GEMINI_TIMEOUT_SECONDS * 1000);
+    });
+
+    const callPromise = ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+      },
+    });
+
+    const response = await Promise.race([callPromise, timeoutPromise]);
+    const text = response.text || '';
+    const cleanJson = text.replace(/```json\n?|\n?```/g, '').trim();
+    const parsed = JSON.parse(cleanJson);
+
+    return {
+      executiveSummary: parsed.executiveSummary || `${data.display_no}: ${data.summary}`,
+      currentStatus: parsed.currentStatus || `Status is ${data.status} with ${data.department}.`,
+      timelineHighlights: Array.isArray(parsed.timelineHighlights) ? parsed.timelineHighlights : [data.summary],
+      recommendedAction: parsed.recommendedAction || 'Continue tracking department resolution.',
+      model: GEMINI_MODEL,
+      generatedAt: nowIso,
+    };
+  } catch (err) {
+    console.warn('Gemini grievance summary failed, falling back:', err);
+    return fallbackSummary();
+  }
+}

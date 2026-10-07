@@ -1,0 +1,99 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User account profile for students, officers, and grievance cell staff",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user identifier" },
+        "email": { "type": "string", "format": "email", "description": "User college email address" },
+        "name": { "type": "string", "description": "Full name of the user" },
+        "role": { "type": "string", "enum": ["STUDENT", "OFFICER", "GRIEVANCE_CELL"], "description": "User role in CampusFix AI" },
+        "academic_department": { "type": "string", "description": "Academic department for students" },
+        "department_id": { "type": "number", "description": "Assigned service unit ID for officers" },
+        "year": { "type": "string", "description": "Academic year for students (FE, SE, TE, BE)" },
+        "division": { "type": "string", "description": "Class division for students" },
+        "phone": { "type": "string", "description": "Contact phone number" },
+        "created_at": { "type": "string", "format": "date-time", "description": "Account registration timestamp" }
+      },
+      "required": ["email", "name", "role"]
+    },
+    "grievance": {
+      "title": "Grievance",
+      "description": "College grievance ticket lodged by a student",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Grievance identifier" },
+        "ticket_number": { "type": "string", "description": "Human-readable reference code" },
+        "student_id": { "type": "string", "description": "User ID of the lodging student" },
+        "student_name": { "type": "string", "description": "Name of the student" },
+        "title": { "type": "string", "description": "Summary title of the issue" },
+        "description": { "type": "string", "description": "Detailed grievance description" },
+        "category": { "type": "string", "description": "Issue category" },
+        "priority": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"], "description": "Priority level" },
+        "status": { "type": "string", "enum": ["OPEN", "IN_PROGRESS", "ESCALATED", "RESOLVED"], "description": "Lifecycle status" },
+        "department_id": { "type": "number", "description": "Assigned department ID" },
+        "department_name": { "type": "string", "description": "Assigned department name" },
+        "location": { "type": "string", "description": "Optional free-text campus location" },
+        "photo_urls": { "type": "array", "description": "Student-submitted photos (maximum 3)" },
+        "escalation_reason": { "type": "string", "description": "Reason given by officer when escalating" },
+        "escalated_by_dept": { "type": "string", "description": "Department name that escalated" },
+        "resolution_note": { "type": "string", "description": "Public resolution note visible to student" },
+        "resolved_at": { "type": "string", "format": "date-time", "description": "Timestamp of resolution" },
+        "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "updated_at": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+        "sla_hours": { "type": "number", "description": "SLA turnaround hours (Critical 24, High 48, Medium 72, Low 168)" },
+        "due_at": { "type": "string", "format": "date-time", "description": "SLA due timestamp" }
+      },
+      "required": ["ticket_number", "student_id", "title", "description", "category", "priority", "status", "created_at"]
+    },
+    "grievance_history": {
+      "title": "GrievanceHistory",
+      "description": "Audit trail log event for a grievance ticket",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "History event ID" },
+        "grievance_id": { "type": "string", "description": "Parent grievance identifier" },
+        "status": { "type": "string", "description": "State transition status" },
+        "actor_name": { "type": "string", "description": "Name of staff or student" },
+        "actor_role": { "type": "string", "description": "Role of the actor" },
+        "note": { "type": "string", "description": "Action explanation, escalation reason, or resolution note" },
+        "created_at": { "type": "string", "format": "date-time", "description": "Event timestamp" }
+      },
+      "required": ["grievance_id", "status", "actor_name", "created_at"]
+    },
+    "notification": {
+      "title": "Notification",
+      "description": "In-app notification loaded from the database",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Notification ID" },
+        "user_id": { "type": "string", "description": "Recipient user ID" },
+        "title": { "type": "string", "description": "Title headline" },
+        "message": { "type": "string", "description": "Notification content" },
+        "grievance_id": { "type": "string", "description": "Associated grievance ID" },
+        "is_read": { "type": "boolean", "description": "Read flag" },
+        "created_at": { "type": "string", "format": "date-time", "description": "Created timestamp" }
+      },
+      "required": ["user_id", "title", "message", "is_read", "created_at"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "User profiles with role, department, and student details"
+    },
+    "/grievances/{grievanceId}": {
+      "schema": "grievance",
+      "description": "Campus grievance tickets with SLA, photos, status, and department routing"
+    },
+    "/grievances/{grievanceId}/history/{historyId}": {
+      "schema": "grievance_history",
+      "description": "Immutable lifecycle history records for each grievance"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "notification",
+      "description": "Database-persisted user notifications"
+    }
+  }
+}

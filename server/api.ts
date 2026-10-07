@@ -1296,4 +1296,69 @@ router.get('/analytics/summary', requireAuth, requireRole(['GRIEVANCE_CELL', 'AD
   });
 });
 
+router.get('/analytics/export/csv', requireAuth, requireRole(['GRIEVANCE_CELL', 'ADMIN']), (req: AuthenticatedRequest, res) => {
+  const user = req.user!;
+  const db = loadDatabase();
+  const collegeGrievances = db.grievances.filter(g => g.college_id === user.college_id);
+
+  const headers = [
+    'Ticket ID',
+    'Summary',
+    'Description',
+    'Category',
+    'Department',
+    'Assigned To',
+    'Priority',
+    'Status',
+    'Student Name',
+    'Student Dept',
+    'Student Year',
+    'Student Division',
+    'Location',
+    'Submitted At',
+    'Due Date',
+    'SLA Status',
+    'Resolved At'
+  ];
+
+  const escapeCsv = (val: any) => {
+    if (val === null || val === undefined) return '""';
+    const s = String(val).replace(/"/g, '""');
+    return `"${s}"`;
+  };
+
+  const rows = collegeGrievances.map(g => {
+    const student = db.users.find(u => u.id === g.student_id);
+    const cat = db.categories.find(c => c.id === g.category_id)?.name || 'Other';
+    const dept = db.departments.find(d => d.id === g.department_id)?.name || 'Other';
+    const sla = calculateSla(g);
+    return [
+      escapeCsv(g.display_no),
+      escapeCsv(g.summary),
+      escapeCsv(g.description),
+      escapeCsv(cat),
+      escapeCsv(dept),
+      escapeCsv(g.assigned_to_name || 'Unassigned'),
+      escapeCsv(g.priority),
+      escapeCsv(g.status),
+      escapeCsv(student ? student.name : 'Unknown'),
+      escapeCsv(student?.academic_department || 'N/A'),
+      escapeCsv(student?.year || 'N/A'),
+      escapeCsv(student?.division || 'N/A'),
+      escapeCsv(g.location),
+      escapeCsv(g.created_at),
+      escapeCsv(g.due_at),
+      escapeCsv(sla.status),
+      escapeCsv(g.resolved_at || '')
+    ].join(',');
+  });
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  const filename = `CampusFix_Analytics_Grievances_${new Date().toISOString().split('T')[0]}.csv`;
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(csvContent);
+});
+
 export default router;

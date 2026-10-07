@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
-const FASTAPI_PORT = parseInt(process.env.FASTAPI_PORT || '8000', 10);
+const FASTAPI_PORT = parseInt(process.env.FASTAPI_PORT || '8088', 10);
 const isProd = process.env.NODE_ENV === 'production';
 
 // Initialize in-memory / JSON database for embedded fallback

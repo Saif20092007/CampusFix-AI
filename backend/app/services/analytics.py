@@ -133,3 +133,59 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
         priority_counts=priority_counts,
         trend=trend,
     )
+
+
+def export_grievances_csv(user: User, db: Session) -> str:
+    """Generates a comprehensive CSV export of all grievances in the user's college using Pandas."""
+    col_id = user.college_id
+    categories = {c.id: c.name for c in db.query(Category).filter(Category.college_id == col_id).all()}
+    departments = {d.id: d.name for d in db.query(Department).filter(Department.college_id == col_id).all()}
+    students = {u.id: u for u in db.query(User).filter(User.college_id == col_id).all()}
+
+    grievances = db.query(Grievance).filter(Grievance.college_id == col_id).order_by(Grievance.id.desc()).all()
+
+    now = datetime.utcnow()
+    records = []
+    for g in grievances:
+        st = students.get(g.student_id)
+        # Calculate SLA status
+        if g.status == "RESOLVED":
+            sla_status = "RESOLVED_ON_TIME" if g.resolved_at and g.resolved_at <= g.due_at else "RESOLVED_LATE"
+        elif g.due_at < now:
+            sla_status = "OVERDUE"
+        elif g.due_at <= now + timedelta(hours=6):
+            sla_status = "DUE_SOON"
+        else:
+            sla_status = "ON_TIME"
+
+        records.append({
+            "Ticket ID": g.display_no,
+            "Summary": g.summary,
+            "Description": g.description,
+            "Category": categories.get(g.category_id, "Other"),
+            "Department": departments.get(g.department_id, "Other"),
+            "Assigned To": g.assigned_to_name or "Unassigned",
+            "Priority": g.priority,
+            "Status": g.status,
+            "Student Name": st.name if st else "Unknown",
+            "Student Dept": st.academic_department if st and st.academic_department else "N/A",
+            "Student Year": st.year if st and st.year else "N/A",
+            "Student Division": st.division if st and st.division else "N/A",
+            "Location": g.location,
+            "Submitted At": g.created_at.strftime("%Y-%m-%d %H:%M:%S") if g.created_at else "",
+            "Due Date": g.due_at.strftime("%Y-%m-%d %H:%M:%S") if g.due_at else "",
+            "SLA Status": sla_status,
+            "Resolved At": g.resolved_at.strftime("%Y-%m-%d %H:%M:%S") if g.resolved_at else "",
+        })
+
+    if not records:
+        df = pd.DataFrame(columns=[
+            "Ticket ID", "Summary", "Description", "Category", "Department",
+            "Assigned To", "Priority", "Status", "Student Name", "Student Dept",
+            "Student Year", "Student Division", "Location", "Submitted At",
+            "Due Date", "SLA Status", "Resolved At"
+        ])
+    else:
+        df = pd.DataFrame(records)
+
+    return df.to_csv(index=False)

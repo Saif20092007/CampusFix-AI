@@ -231,4 +231,15 @@ export const api = {
   async getAnalyticsSummary(): Promise<AnalyticsSummary> {
     return request<AnalyticsSummary>('/api/analytics/summary');
   },
+
+  async exportAnalyticsCsv(): Promise<Blob> {
+    const token = getStoredToken();
+    const res = await fetch('/api/analytics/export/csv', {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!res.ok) throw new Error('Failed to export CSV');
+    return res.blob();
+  },
 };

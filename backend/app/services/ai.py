@@ -1,6 +1,7 @@
 import os
 import json
 import re
+from datetime import datetime
 from typing import Dict, Any, List, Tuple
 from google import genai
 from google.genai import types
@@ -112,3 +113,87 @@ Return strictly a valid JSON object with:
     except Exception:
         fallback = perform_keyword_fallback(description, location)
         return fallback, json.dumps(fallback), True, f"fallback-{GEMINI_MODEL}"
+
+def summarize_grievance_history(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Generates an operational summary/synopsis of grievance trajectory and timeline for staff."""
+    now_iso = datetime.utcnow().isoformat() + "Z"
+
+    def make_fallback():
+        highlights = []
+        for t in data.get("timeline", []):
+            time_str = t.get("created_at", "")[:16].replace("T", " ")
+            action = "Staff remark" if t.get("kind") == "INTERNAL_REMARK" else (t.get("status") or t.get("kind") or "Updated")
+            highlights.append(f"{time_str} - {action} by {t.get('actor_name')}: \"{t.get('note', '')[:80]}\"")
+
+        if not highlights:
+            highlights.append(f"Ticket logged as {data.get('priority')} priority in {data.get('department')}.")
+
+        recommended = "Monitor ticket resolution within standard department timeframe."
+        if data.get("status") == "ESCALATED":
+            recommended = "Review department escalation rationale and evaluate inter-department reassignment or central intervention."
+        elif data.get("status") == "RESOLVED":
+            recommended = "Grievance resolved and closed. No further central intervention needed."
+        elif data.get("sla_status") == "OVERDUE":
+            recommended = "SLA turnaround breached. Urgently contact department head for expediting resolution."
+
+        return {
+            "executiveSummary": f"Complaint {data.get('display_no')} reports {data.get('summary')}. Lodged by {data.get('student_name', 'Student')} with {data.get('priority')} priority in {data.get('department')} department.",
+            "currentStatus": f"Status is {data.get('status')}. Assigned to {data.get('assigned_to_name', 'service lead')}. SLA is {data.get('sla_status')} ({data.get('sla_label')}).",
+            "timelineHighlights": highlights,
+            "recommendedAction": recommended,
+            "model": "deterministic-fallback",
+            "generatedAt": now_iso,
+        }
+
+    if not GEMINI_API_KEY or GEMINI_API_KEY.startswith("mock") or GEMINI_API_KEY.startswith("MY_GEMINI"):
+        return make_fallback()
+
+    try:
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        timeline_text = "\n".join([
+            f"- [{t.get('created_at')}] ({t.get('kind')}) {t.get('actor_name')} ({t.get('actor_role')}): {t.get('note')}"
+            for t in data.get("timeline", [])
+        ])
+
+        prompt = f"""
+You are the Grievance Cell executive officer assistant at an engineering college.
+Generate a concise, factual case synopsis of this ticket for staff review:
+
+Display No: {data.get('display_no')}
+Title: {data.get('summary')}
+Description: {data.get('description')}
+Department: {data.get('department')}
+Priority: {data.get('priority')}
+Current Status: {data.get('status')}
+Location: {data.get('location')}
+Student Name: {data.get('student_name')}
+SLA State: {data.get('sla_status')} ({data.get('sla_label')})
+
+Timeline History:
+{timeline_text}
+
+Return JSON with:
+- "executiveSummary": string (2-3 sentences overview)
+- "currentStatus": string (1-2 sentences on current state & ownership)
+- "timelineHighlights": array of 2-4 key milestone bullets
+- "recommendedAction": string (1 actionable triage next step)
+"""
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.2
+            )
+        )
+        parsed = json.loads(response.text.strip())
+        return {
+            "executiveSummary": parsed.get("executiveSummary", ""),
+            "currentStatus": parsed.get("currentStatus", ""),
+            "timelineHighlights": parsed.get("timelineHighlights", []),
+            "recommendedAction": parsed.get("recommendedAction", ""),
+            "model": GEMINI_MODEL,
+            "generatedAt": now_iso,
+        }
+    except Exception:
+        return make_fallback()

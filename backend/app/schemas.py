@@ -223,3 +223,12 @@ class AnalyticsSummaryOut(BaseModel):
     department_counts: Dict[str, int]
     priority_counts: Dict[str, int]
     trend: List[AnalyticsTrendPoint]
+
+# --- AI Case Synopsis Schema ---
+class GrievanceAiSummaryOut(BaseModel):
+    executiveSummary: str
+    currentStatus: str
+    timelineHighlights: List[str]
+    recommendedAction: str
+    model: str
+    generatedAt: str

@@ -28,12 +28,7 @@ def seed_db():
             name="Nutan Maharashtra Institute of Engineering & Technology",
             display_name="NMIET"
         )
-        college_b = College(
-            id=2,
-            name="College B Institute of Technology",
-            display_name="College B"
-        )
-        db.add_all([nmiet, college_b])
+        db.add(nmiet)
         db.commit()
 
         # 2. Departments
@@ -46,12 +41,7 @@ def seed_db():
             Department(id=6, college_id=1, name="Campus Security", code="SEC"),
             Department(id=7, college_id=1, name="Grievance Cell Central", code="GCC"),
         ]
-        college_b_depts = [
-            Department(id=8, college_id=2, name="Electrical & Energy", code="EE"),
-            Department(id=9, college_id=2, name="IT Infrastructure", code="ITI"),
-            Department(id=10, college_id=2, name="Grievance Cell", code="GCB"),
-        ]
-        db.add_all(nmiet_depts + college_b_depts)
+        db.add_all(nmiet_depts)
         db.commit()
 
         # 3. Categories
@@ -64,12 +54,7 @@ def seed_db():
             Category(id=6, college_id=1, name="Security & Parking", department_id=6),
             Category(id=7, college_id=1, name="Other", department_id=7),
         ]
-        college_b_cats = [
-            Category(id=8, college_id=2, name="Electrical Issues", department_id=8),
-            Category(id=9, college_id=2, name="Wi-Fi & Labs", department_id=9),
-            Category(id=10, college_id=2, name="General Infrastructure", department_id=10),
-        ]
-        db.add_all(nmiet_cats + college_b_cats)
+        db.add_all(nmiet_cats)
         db.commit()
 
         # 4. SLA Rules
@@ -78,30 +63,26 @@ def seed_db():
             SlaRule(college_id=1, priority="High", hours=48),
             SlaRule(college_id=1, priority="Medium", hours=72),
             SlaRule(college_id=1, priority="Low", hours=168),
-            SlaRule(college_id=2, priority="Critical", hours=24),
-            SlaRule(college_id=2, priority="High", hours=48),
-            SlaRule(college_id=2, priority="Medium", hours=72),
-            SlaRule(college_id=2, priority="Low", hours=168),
         ]
         db.add_all(sla_rules)
         db.commit()
 
-        # 5. Demo Users
+        # 5. Demo Users (NMIET Only)
         password_hash = hash_password("campus123")
         users = [
             User(
                 id=1,
                 email="student@nmiet.demo",
                 password_hash=password_hash,
-                name="Saif Patil",
+                name="Saif Sayyad",
                 role="STUDENT",
                 college_id=1,
                 department_id=None,
                 academic_department="Computer Engineering",
-                year="TE",
-                division="Div B",
-                roll_no="42",
-                phone="9876543210"
+                year="SY",
+                division="Division B",
+                roll_no="56",
+                phone="+91 98220 44910"
             ),
             User(
                 id=2,
@@ -110,7 +91,7 @@ def seed_db():
                 name="Santosh Shinde",
                 role="OFFICER",
                 college_id=1,
-                department_id=1, # Electrical
+                department_id=1,  # Electrical Maintenance
                 academic_department=None,
                 year=None,
                 division=None,
@@ -121,49 +102,21 @@ def seed_db():
                 id=3,
                 email="cell@nmiet.demo",
                 password_hash=password_hash,
-                name="Dr. S. K. Joshi",
+                name="Dr. Mahesh Wankhede",
                 role="GRIEVANCE_CELL",
                 college_id=1,
-                department_id=7, # Grievance Cell
+                department_id=7,  # Grievance Cell
                 academic_department=None,
                 year=None,
                 division=None,
                 roll_no=None,
                 phone="9822003344"
-            ),
-            User(
-                id=4,
-                email="student@collegeb.demo",
-                password_hash=password_hash,
-                name="Aarav Sharma",
-                role="STUDENT",
-                college_id=2,
-                department_id=None,
-                academic_department="Information Technology",
-                year="BE",
-                division="Div A",
-                roll_no="12",
-                phone="9111223344"
-            ),
-            User(
-                id=5,
-                email="cell@collegeb.demo",
-                password_hash=password_hash,
-                name="Prof. V. N. Patil",
-                role="GRIEVANCE_CELL",
-                college_id=2,
-                department_id=10,
-                academic_department=None,
-                year=None,
-                division=None,
-                roll_no=None,
-                phone="9111556677"
             )
         ]
         db.add_all(users)
         db.commit()
 
-        # 6. Sample Grievances for NMIET & College B
+        # 6. Sample Grievances for NMIET
         now = datetime.utcnow()
 
         # Grievance 1: Saif's Electrical issue
@@ -232,40 +185,18 @@ def seed_db():
             resolution_note="Router replaced with dual-band access point."
         )
 
-        # Grievance 4: College B complaint
-        g4 = Grievance(
-            id=4,
-            public_id="cf-demo-colb-001",
-            display_no="CF-00201",
-            college_id=2,
-            student_id=4,
-            description="College B main auditorium air conditioner unit making loud grinding noise during lectures.",
-            summary="Auditorium AC unit noise",
-            category_id=8,
-            department_id=8,
-            priority="Medium",
-            location="Main Auditorium",
-            status="ASSIGNED",
-            due_at=now + timedelta(hours=48),
-            created_at=now - timedelta(hours=4),
-            resolved_at=None,
-            assigned_to_id=None,
-            assigned_to_name="College B Maintenance",
-            resolution_note=None
-        )
-
-        db.add_all([g1, g2, g3, g4])
+        db.add_all([g1, g2, g3])
         db.commit()
 
         # Status histories
         h1 = StatusHistory(
             grievance_id=1,
             actor_id=1,
-            actor_name="Saif Patil",
+            actor_name="Saif Sayyad",
             actor_role="STUDENT",
             status="SUBMITTED",
             kind="STATUS_CHANGE",
-            note="Complaint logged by Saif Patil via AI portal with photo diagnostic tag #00101.",
+            note="Complaint logged by Saif Sayyad via AI portal with photo diagnostic tag #00101.",
             is_public=True,
             created_at=now - timedelta(hours=12)
         )

@@ -18,11 +18,11 @@ from app.schemas import (
     GrievanceDetailOut, GrievanceListResponse, GrievanceStatusUpdate,
     GrievanceEscalate, GrievanceAssign, GrievancePriorityUpdate,
     GrievanceRemarkCreate, StatusHistoryOut, AttachmentInfo,
-    StudentOfficerSummary, StudentCellSummary
+    StudentOfficerSummary, StudentCellSummary, GrievanceAiSummaryOut
 )
 from app.auth import get_current_user, require_role, analyze_rate_limiter
 from app.services.scoping import scope_grievances_query, get_scoped_grievance, verify_attachment_access
-from app.services.ai import analyze_with_gemini
+from app.services.ai import analyze_with_gemini, summarize_grievance_history
 from app.services.sla import compute_due_at, calculate_sla
 
 router = APIRouter(prefix="/api", tags=["Grievances"])
@@ -849,3 +849,54 @@ def download_attachment(
         return FileResponse(path=file_path, media_type=attachment.file_type, filename=attachment.file_name)
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found on disk")
+
+# --- Staff AI Case Synopsis ---
+@router.get("/grievances/{public_id}/ai-summary", response_model=GrievanceAiSummaryOut)
+def get_grievance_ai_summary(
+    public_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role not in ["GRIEVANCE_CELL", "OFFICER", "ADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only staff can generate an AI grievance synopsis."
+        )
+
+    grievance = get_scoped_grievance(public_id, current_user, db)
+    cat = db.query(Category).filter(Category.id == grievance.category_id).first()
+    dept = db.query(Department).filter(Department.id == grievance.department_id).first()
+    student = db.query(User).filter(User.id == grievance.student_id).first()
+    sla = calculate_sla(grievance)
+
+    history = db.query(StatusHistory).filter(StatusHistory.grievance_id == grievance.id).order_by(StatusHistory.created_at.asc()).all()
+
+    summary_data = summarize_grievance_history({
+        "display_no": grievance.display_no,
+        "summary": grievance.summary,
+        "description": grievance.description,
+        "category": cat.name if cat else "General",
+        "department": dept.name if dept else "Central Administration",
+        "priority": grievance.priority,
+        "status": grievance.status,
+        "location": grievance.location,
+        "student_name": student.name if student else "Student",
+        "assigned_to_name": grievance.assigned_to_name,
+        "sla_status": sla.status,
+        "sla_label": sla.human_text,
+        "due_at": grievance.due_at.isoformat() if grievance.due_at else None,
+        "timeline": [
+            {
+                "status": h.status,
+                "kind": h.kind,
+                "note": h.note,
+                "actor_name": h.actor_name,
+                "actor_role": h.actor_role,
+                "created_at": h.created_at.isoformat() if h.created_at else "",
+            }
+            for h in history
+        ]
+    })
+
+    return summary_data
+

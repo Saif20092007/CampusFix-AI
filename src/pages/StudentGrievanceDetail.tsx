@@ -14,7 +14,7 @@ export const StudentGrievanceDetail: React.FC<StudentGrievanceDetailProps> = ({
   publicId,
   onBack,
 }) => {
-  const [grievance, setGrievance] = useState<(Grievance & { fromCache?: boolean }) | null>(null);
+  const [grievance, setGrievance] = useState<Grievance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -124,14 +124,6 @@ export const StudentGrievanceDetail: React.FC<StudentGrievanceDetailProps> = ({
           </button>
         </div>
       </div>
-
-      {/* Offline cached notification if applicable */}
-      {(grievance.fromCache || (typeof navigator !== 'undefined' && !navigator.onLine)) && (
-        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-[12px] font-medium shadow-xs">
-          <span className="material-symbols-outlined text-[16px] text-amber-600 dark:text-amber-400">offline_pin</span>
-          <span>Offline Cached Record — Viewing grievance data saved in your browser's IndexedDB.</span>
-        </div>
-      )}
 
       {/* Main Ticket Card */}
       <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container">

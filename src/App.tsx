@@ -16,11 +16,9 @@ import { OfficerDashboard } from './pages/OfficerDashboard';
 import { OfficerTicketDetail } from './pages/OfficerTicketDetail';
 import { GrievanceCellTicketDetail } from './pages/GrievanceCellTicketDetail';
 import { AnalyticsPage } from './pages/AnalyticsPage';
-import { OfflineIndicator } from './components/OfflineIndicator';
 import { api } from './services/api';
-import { AiAnalysisResponse, Grievance, NotificationItem, PriorityLevel } from './types';
+import { AiAnalysisResponse, Grievance, NotificationItem } from './types';
 import { UploadedFileState } from './components/PhotoUploader';
-import { useBackgroundGrievanceWatcher } from './hooks/useBackgroundGrievanceWatcher';
 
 function MainApp() {
   const { user, isLoading } = useAuth();
@@ -36,7 +34,6 @@ function MainApp() {
   const [reportedDescription, setReportedDescription] = useState('');
   const [reportedLocation, setReportedLocation] = useState('');
   const [reportedPhotos, setReportedPhotos] = useState<UploadedFileState[]>([]);
-  const [reportedPriority, setReportedPriority] = useState<PriorityLevel | undefined>();
   const [createdGrievance, setCreatedGrievance] = useState<Grievance | null>(null);
 
   // Detail view state
@@ -45,22 +42,6 @@ function MainApp() {
 
   // Live notifications
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-
-  // Service Worker background grievance watcher for students
-  const backgroundWatcher = useBackgroundGrievanceWatcher(user, (publicId) => {
-    setSelectedGrievanceId(publicId);
-  });
-
-  // Handle direct link with ?ticket= param (e.g. from service worker notification click)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const ticketId = params.get('ticket');
-      if (ticketId) {
-        setSelectedGrievanceId(ticketId);
-      }
-    }
-  }, []);
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -129,7 +110,6 @@ function MainApp() {
 
   return (
     <div className="min-h-screen bg-surface text-on-surface flex flex-col">
-      <OfflineIndicator />
       {/* Top Header */}
       <Header
         title={selectedGrievanceId ? 'Ticket Details' : undefined}
@@ -175,12 +155,11 @@ function MainApp() {
               reportStep === 1 ? (
                 <ReportIssueStep1
                   initialCategory={prefilledCategory}
-                  onAnalysisComplete={(analysis, desc, loc, photos, taggedPriority) => {
+                  onAnalysisComplete={(analysis, desc, loc, photos) => {
                     setCurrentAnalysis(analysis);
                     setReportedDescription(desc);
                     setReportedLocation(loc);
                     setReportedPhotos(photos);
-                    setReportedPriority(taggedPriority);
                     setReportStep(2);
                   }}
                   onCancel={handleReturnHome}
@@ -191,7 +170,6 @@ function MainApp() {
                   originalDescription={reportedDescription}
                   originalLocation={reportedLocation}
                   photos={reportedPhotos}
-                  initialPriority={reportedPriority}
                   onSubmissionSuccess={(created) => {
                     setCreatedGrievance(created);
                     setReportStep(3);
@@ -220,7 +198,6 @@ function MainApp() {
                 onRefresh={fetchNotifications}
                 onTrackComplaint={(publicId) => setSelectedGrievanceId(publicId)}
                 onReportClick={() => handleStartReport()}
-                backgroundWatcher={backgroundWatcher}
               />
             ) : studentTab === 'profile' ? (
               <ProfilePage />
@@ -228,7 +205,6 @@ function MainApp() {
               <StudentHome
                 onReportClick={handleStartReport}
                 onSelectGrievance={handleSelectGrievance}
-                backgroundWatcher={backgroundWatcher}
               />
             )}
 

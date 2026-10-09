@@ -6,7 +6,6 @@ import { StatusChip } from '../components/StatusChip';
 import { PriorityChip } from '../components/PriorityChip';
 import { SlaBadge } from '../components/SlaBadge';
 import { PhotoModal } from '../components/PhotoModal';
-import { QuickReplySection } from '../components/QuickReplySection';
 
 interface GrievanceCellTicketDetailProps {
   publicId: string;
@@ -525,13 +524,6 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
               </>
             )}
           </div>
-
-          {/* Quick Reply for Grievance Cell */}
-          <QuickReplySection
-            publicId={grievance.public_id}
-            onReplySent={fetchDetail}
-            disabled={grievance.status === 'RESOLVED'}
-          />
 
           {/* Grievance Action History Audit Log */}
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-surface-container space-y-4">

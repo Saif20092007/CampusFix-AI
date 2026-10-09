@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { AiAnalysisResponse, Category, Grievance, PriorityLevel } from '../types';
+import { AiAnalysisResponse, Category, Grievance } from '../types';
 import { UploadedFileState } from '../components/PhotoUploader';
-import { PriorityChip } from '../components/PriorityChip';
 import { api } from '../services/api';
 
 interface ReportIssueStep2Props {
@@ -9,7 +8,6 @@ interface ReportIssueStep2Props {
   originalDescription: string;
   originalLocation: string;
   photos: UploadedFileState[];
-  initialPriority?: PriorityLevel;
   onSubmissionSuccess: (grievance: Grievance) => void;
   onBackToEdit: () => void;
 }
@@ -19,14 +17,12 @@ export const ReportIssueStep2: React.FC<ReportIssueStep2Props> = ({
   originalDescription,
   originalLocation,
   photos,
-  initialPriority,
   onSubmissionSuccess,
   onBackToEdit,
 }) => {
   const [summary, setSummary] = useState(analysis.summary);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number>(analysis.category_id);
   const [location, setLocation] = useState(analysis.location || originalLocation || 'Hostel B');
-  const [priority, setPriority] = useState<PriorityLevel>(initialPriority || analysis.priority || 'Medium');
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -54,7 +50,6 @@ export const ReportIssueStep2: React.FC<ReportIssueStep2Props> = ({
         location: location.trim(),
         analysis_id: analysis.analysis_id,
         attachment_ids: photos.map(p => p.attachment_id),
-        priority,
       });
 
       onSubmissionSuccess(created);
@@ -156,42 +151,6 @@ export const ReportIssueStep2: React.FC<ReportIssueStep2Props> = ({
               className="w-full h-12 px-4 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm transition-all"
             />
           </div>
-
-          {/* Priority Level Tag Selector */}
-          <div className="flex flex-col gap-1.5 pt-1">
-            <label className="text-[12px] font-semibold text-on-surface-variant flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[15px] text-secondary">label_important</span>
-                Priority Tag
-              </span>
-              <span className="text-[11px] text-secondary font-normal">Tap to adjust priority</span>
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { level: 'Low' as PriorityLevel, label: 'Low', icon: 'low_priority', borderClass: 'border-slate-400 bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200' },
-                { level: 'Medium' as PriorityLevel, label: 'Medium', icon: 'swap_vert', borderClass: 'border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200' },
-                { level: 'High' as PriorityLevel, label: 'High', icon: 'bolt', borderClass: 'border-orange-400 bg-orange-50 text-orange-900 dark:bg-orange-950/40 dark:text-orange-200' },
-                { level: 'Critical' as PriorityLevel, label: 'Critical', icon: 'crisis_alert', borderClass: 'border-rose-400 bg-rose-50 text-rose-900 dark:bg-rose-950/40 dark:text-rose-200' },
-              ].map((p) => {
-                const isSelected = priority === p.level;
-                return (
-                  <button
-                    key={p.level}
-                    type="button"
-                    onClick={() => setPriority(p.level)}
-                    className={`py-2 px-1 rounded-xl text-center border font-semibold text-[12px] transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
-                      isSelected
-                        ? `${p.borderClass} ring-2 ring-primary/40 shadow-xs font-bold`
-                        : 'border-surface-container bg-surface-container-lowest text-secondary hover:bg-surface-container-low'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[16px]">{p.icon}</span>
-                    <span>{p.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
         {/* Uploaded Complaint Photo Previews */}
@@ -223,10 +182,13 @@ export const ReportIssueStep2: React.FC<ReportIssueStep2Props> = ({
             </span>
           </div>
 
-          {/* Tagged Priority */}
+          {/* Detected Priority (Strictly Read-Only) */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[13px] text-secondary">Tagged Ticket Priority</span>
-            <PriorityChip priority={priority} size="md" />
+            <span className="text-[13px] text-secondary">Detected Priority</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-error-container text-on-error-container border border-error-container">
+              <span className="material-symbols-outlined text-[15px] text-error font-semibold">bolt</span>
+              <span className="text-[12px] text-error font-bold">{analysis.priority} Priority</span>
+            </div>
           </div>
 
           {/* Responsible Department */}

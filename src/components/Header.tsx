@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { NotificationItem } from '../types';
-import { PWAInstallButton } from './PWAInstallButton';
-import { CampusFixLogo } from './CampusFixLogo';
 
 interface HeaderProps {
   title?: string;
@@ -47,7 +45,11 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-2.5 cursor-pointer select-none"
             onClick={onNavigateHome}
           >
-            <CampusFixLogo size={32} />
+            <img
+              alt="CampusFix AI NMIET Logo"
+              className="h-8 w-auto object-contain shrink-0"
+              src="https://lh3.googleusercontent.com/aida/AEtjO1VAHa6BtotIvGAQa_8ZdhoqIcJGzxLPAkqr8mAka7WvGC-Frw8-glwvYVf_oKeE7LyYE476u_KUCKZ_ek3HNOml2BbAZLIth2TIFSLK4D0twV5rOVScE8aV5V5C9oyCu349Rgfq9uFX75sNMFakyhhHXoxwuwsGCPT2CtzvI8pELn7up1DV5aokHvpn-4lMXujKVPnCDlvEp7UycHa332gtEsg2g7nFqwzkbzDVQ6g1T6e3w9u2AGdKyNk"
+            />
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-[17px] text-on-surface tracking-tight truncate">
                 {title || 'CampusFix AI'}
@@ -65,25 +67,22 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right side controls */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* PWA Install Button */}
-          <PWAInstallButton />
-
           {/* Quick Demo Switcher Pill */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setShowDemoMenu(!showDemoMenu)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-[12px] font-medium text-primary transition-all active:scale-95"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-[12px] font-medium text-primary transition-all active:scale-95"
             >
               <span className="material-symbols-outlined text-[16px]">switch_account</span>
-              <span>Demo</span>
+              <span>Demo Persona</span>
               <span className="material-symbols-outlined text-[14px]">arrow_drop_down</span>
             </button>
 
             {showDemoMenu && (
               <div className="absolute right-0 top-12 w-56 rounded-xl bg-surface-container-lowest p-2 shadow-xl border border-surface-container-high z-50 flex flex-col gap-1 text-[13px]">
                 <div className="px-2 py-1 text-[11px] font-semibold text-secondary uppercase tracking-wider">
-                  Select Demo Account
+                  Select Role
                 </div>
                 <button
                   type="button"
@@ -104,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'officer@nmiet.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
                 >
-                  <span>HOD</span>
+                  <span>Officer</span>
                   <span className="text-[10px] opacity-75">Santosh Shinde</span>
                 </button>
                 <button
@@ -115,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className={`text-left px-2.5 py-1.5 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between ${user?.email === 'cell@nmiet.demo' ? 'bg-primary-container text-on-primary font-semibold' : 'text-on-surface'}`}
                 >
-                  <span>Principal</span>
+                  <span>Grievance Cell</span>
                   <span className="text-[10px] opacity-75">Dr. Mahesh Wankhede</span>
                 </button>
               </div>

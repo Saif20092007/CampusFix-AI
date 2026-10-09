@@ -1,21 +1,12 @@
 import React, { useState } from 'react';
 import { NotificationItem } from '../types';
 import { api } from '../services/api';
-import { BackgroundNotificationBanner } from '../components/BackgroundNotificationBanner';
 
 interface NotificationsPageProps {
   notifications: NotificationItem[];
   onRefresh: () => void;
   onTrackComplaint: (publicId: string) => void;
   onReportClick: () => void;
-  backgroundWatcher?: {
-    permission: NotificationPermission;
-    isSupported: boolean;
-    enableNotifications: () => Promise<NotificationPermission>;
-    triggerTestBackgroundNotification: (status?: 'IN_PROGRESS' | 'RESOLVED') => void;
-    isTestPending: boolean;
-    testCountdown: number | null;
-  };
 }
 
 export const NotificationsPage: React.FC<NotificationsPageProps> = ({
@@ -23,7 +14,6 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
   onRefresh,
   onTrackComplaint,
   onReportClick,
-  backgroundWatcher,
 }) => {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [showEmptyPreview, setShowEmptyPreview] = useState(false);
@@ -56,17 +46,6 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
 
   return (
     <div className="flex flex-col w-full pb-24 space-y-4 animate-fade-in">
-      {/* Background Status Alert Banner */}
-      {backgroundWatcher && (
-        <BackgroundNotificationBanner
-          permission={backgroundWatcher.permission}
-          isSupported={backgroundWatcher.isSupported}
-          onEnable={backgroundWatcher.enableNotifications}
-          onTest={backgroundWatcher.triggerTestBackgroundNotification}
-          isTestPending={backgroundWatcher.isTestPending}
-          testCountdown={backgroundWatcher.testCountdown}
-        />
-      )}
       {/* Top Segmented Filter Tabs & Mark As Read */}
       <div className="flex items-center justify-between gap-2 pt-1">
         <div className="inline-flex p-1 bg-surface-container-high rounded-xl">

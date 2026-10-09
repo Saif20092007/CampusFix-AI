@@ -5,122 +5,21 @@ import { Grievance } from '../types';
 import { StatusChip } from '../components/StatusChip';
 import { PriorityChip } from '../components/PriorityChip';
 import { SlaBadge } from '../components/SlaBadge';
-import { BackgroundNotificationBanner } from '../components/BackgroundNotificationBanner';
 
 interface StudentHomeProps {
   onReportClick: (category?: string) => void;
   onSelectGrievance: (publicId: string) => void;
-  backgroundWatcher?: {
-    permission: NotificationPermission;
-    isSupported: boolean;
-    enableNotifications: () => Promise<NotificationPermission>;
-    triggerTestBackgroundNotification: (status?: 'IN_PROGRESS' | 'RESOLVED') => void;
-    isTestPending: boolean;
-    testCountdown: number | null;
-  };
 }
-
-const SEARCHES_STORAGE_KEY = 'campusfix_recent_searches_';
-const TRACKED_STORAGE_KEY = 'campusfix_recent_tracked_';
 
 export const StudentHome: React.FC<StudentHomeProps> = ({
   onReportClick,
   onSelectGrievance,
-  backgroundWatcher,
 }) => {
   const { user } = useAuth();
   const [grievances, setGrievances] = useState<Grievance[]>([]);
   const [filterTab, setFilterTab] = useState<'all' | 'active' | 'resolved'>('all');
-  const [priorityFilter, setPriorityFilter] = useState<'all' | 'Low' | 'Medium' | 'High' | 'Critical'>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isOfflineCached, setIsOfflineCached] = useState(false);
-
-  // Search & LocalStorage Recent Searches State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [recentTracked, setRecentTracked] = useState<
-    Array<{ display_no: string; summary: string; public_id: string; date: string }>
-  >([]);
-
-  // Load recent searches & tracked grievances from localStorage
-  useEffect(() => {
-    const userId = user?.id || 'default';
-    try {
-      const savedSearches = localStorage.getItem(`${SEARCHES_STORAGE_KEY}${userId}`);
-      if (savedSearches) {
-        setRecentSearches(JSON.parse(savedSearches));
-      }
-      const savedTracked = localStorage.getItem(`${TRACKED_STORAGE_KEY}${userId}`);
-      if (savedTracked) {
-        setRecentTracked(JSON.parse(savedTracked));
-      }
-    } catch (e) {
-      console.warn('Failed to load recent searches from localStorage:', e);
-    }
-  }, [user]);
-
-  const saveRecentSearches = (items: string[]) => {
-    setRecentSearches(items);
-    const userId = user?.id || 'default';
-    try {
-      localStorage.setItem(`${SEARCHES_STORAGE_KEY}${userId}`, JSON.stringify(items));
-    } catch (e) {
-      console.warn('Failed to save recent searches:', e);
-    }
-  };
-
-  const handleCommitSearch = (term: string) => {
-    const trimmed = term.trim();
-    if (!trimmed || trimmed.length < 2) return;
-    const filtered = recentSearches.filter(
-      (s) => s.toLowerCase() !== trimmed.toLowerCase()
-    );
-    const updated = [trimmed, ...filtered].slice(0, 8);
-    saveRecentSearches(updated);
-  };
-
-  const handleRemoveRecentSearch = (termToRemove: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const updated = recentSearches.filter((s) => s !== termToRemove);
-    saveRecentSearches(updated);
-  };
-
-  const handleClearAllSearches = () => {
-    saveRecentSearches([]);
-  };
-
-  const handleSelectTrackedGrievance = (grievance: Grievance) => {
-    const userId = user?.id || 'default';
-    const entry = {
-      display_no: grievance.display_no,
-      summary: grievance.summary,
-      public_id: grievance.public_id,
-      date: new Date().toISOString(),
-    };
-    const updated = [
-      entry,
-      ...recentTracked.filter((t) => t.public_id !== grievance.public_id),
-    ].slice(0, 5);
-    setRecentTracked(updated);
-    try {
-      localStorage.setItem(`${TRACKED_STORAGE_KEY}${userId}`, JSON.stringify(updated));
-    } catch {}
-
-    if (searchQuery.trim()) {
-      handleCommitSearch(searchQuery);
-    }
-
-    onSelectGrievance(grievance.public_id);
-  };
-
-  const handleClearTrackedHistory = () => {
-    setRecentTracked([]);
-    const userId = user?.id || 'default';
-    try {
-      localStorage.removeItem(`${TRACKED_STORAGE_KEY}${userId}`);
-    } catch {}
-  };
 
   const fetchGrievances = async () => {
     setIsLoading(true);
@@ -128,7 +27,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
     try {
       const data = await api.getGrievances({ limit: 50 });
       setGrievances(data.items);
-      setIsOfflineCached(!!data.fromCache || (typeof navigator !== 'undefined' && !navigator.onLine));
     } catch (err: any) {
       setError(err.message || 'Failed to load your complaints');
     } finally {
@@ -142,38 +40,10 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
 
   const activeCount = grievances.filter(g => g.status !== 'RESOLVED').length;
   const resolvedCount = grievances.filter(g => g.status === 'RESOLVED').length;
-  const lowCount = grievances.filter(g => g.priority === 'Low').length;
-  const mediumCount = grievances.filter(g => g.priority === 'Medium').length;
-  const highCount = grievances.filter(g => g.priority === 'High').length;
-  const criticalCount = grievances.filter(g => g.priority === 'Critical').length;
 
   const filteredGrievances = grievances.filter(g => {
-    if (filterTab === 'active' && g.status === 'RESOLVED') return false;
-    if (filterTab === 'resolved' && g.status !== 'RESOLVED') return false;
-    if (priorityFilter !== 'all' && g.priority !== priorityFilter) return false;
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const matchDisplay = (g.display_no || '').toLowerCase().includes(q);
-      const matchSummary = (g.summary || '').toLowerCase().includes(q);
-      const matchDesc = (g.description || '').toLowerCase().includes(q);
-      const matchCat = (g.category_name || '').toLowerCase().includes(q);
-      const matchDept = (g.department_name || '').toLowerCase().includes(q);
-      const matchLoc = (g.location || '').toLowerCase().includes(q);
-      const matchPrio = (g.priority || '').toLowerCase().includes(q);
-      const matchStatus = (g.status || '').toLowerCase().includes(q);
-      return (
-        matchDisplay ||
-        matchSummary ||
-        matchDesc ||
-        matchCat ||
-        matchDept ||
-        matchLoc ||
-        matchPrio ||
-        matchStatus
-      );
-    }
-
+    if (filterTab === 'active') return g.status !== 'RESOLVED';
+    if (filterTab === 'resolved') return g.status === 'RESOLVED';
     return true;
   });
 
@@ -206,27 +76,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column (8 cols): Main Student Feed */}
         <div className="lg:col-span-8 flex flex-col space-y-5">
-          {backgroundWatcher && (
-            <BackgroundNotificationBanner
-              permission={backgroundWatcher.permission}
-              isSupported={backgroundWatcher.isSupported}
-              onEnable={backgroundWatcher.enableNotifications}
-              onTest={backgroundWatcher.triggerTestBackgroundNotification}
-              isTestPending={backgroundWatcher.isTestPending}
-              testCountdown={backgroundWatcher.testCountdown}
-            />
-          )}
-
-          {isOfflineCached && (
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-[12px] font-medium shadow-xs">
-              <span className="material-symbols-outlined text-[18px] text-amber-600 dark:text-amber-400">offline_pin</span>
-              <div className="flex-1">
-                <span className="font-semibold block text-[13px]">Offline Storage Active</span>
-                <span>You are currently offline. Viewing your locally cached grievance reports from IndexedDB.</span>
-              </div>
-            </div>
-          )}
-
           {/* Prompt Card: Instant AI Report Trigger */}
           <div className="relative overflow-hidden rounded-xl bg-surface-container-lowest p-5 shadow-sm space-y-4 border border-surface-container">
             <div className="flex items-start justify-between gap-3">
@@ -289,109 +138,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
             </button>
           </div>
 
-          {/* Quick Search & LocalStorage Recent Searches */}
-          <div className="bg-surface-container-lowest p-3.5 rounded-xl border border-surface-container shadow-xs space-y-2.5">
-            <div className="relative flex items-center w-full">
-              <span className="material-symbols-outlined absolute left-3.5 text-secondary text-[20px] pointer-events-none">
-                search
-              </span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleCommitSearch(searchQuery);
-                  }
-                }}
-                placeholder="Search previous grievances by ID (CF-00101), keyword, or location..."
-                className="w-full h-11 pl-11 pr-24 rounded-xl bg-surface-container text-on-surface text-[13px] placeholder:text-outline border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-xs transition-all"
-              />
-              <div className="absolute right-2 flex items-center gap-1">
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-secondary hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
-                    title="Clear search"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
-                )}
-                {searchQuery.trim().length >= 2 && (
-                  <button
-                    type="button"
-                    onClick={() => handleCommitSearch(searchQuery)}
-                    className="px-2.5 py-1 rounded-lg bg-primary-container text-on-primary text-[11px] font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
-                    title="Save to recent searches"
-                  >
-                    Search
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Recent Searches Pills (LocalStorage Backed) */}
-            {recentSearches.length > 0 && (
-              <div className="flex flex-col gap-1.5 pt-0.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-secondary font-medium flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px] text-primary">history</span>
-                    <span>Recent Searches</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleClearAllSearches}
-                    className="text-secondary hover:text-error text-[11px] font-medium transition-colors cursor-pointer"
-                  >
-                    Clear history
-                  </button>
-                </div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {recentSearches.map((term) => (
-                    <span
-                      key={term}
-                      onClick={() => setSearchQuery(term)}
-                      className={`group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer border ${
-                        searchQuery.toLowerCase().trim() === term.toLowerCase().trim()
-                          ? 'bg-primary-container text-on-primary border-primary shadow-xs'
-                          : 'bg-surface-container text-on-surface hover:bg-surface-container-high border-surface-container-high'
-                      }`}
-                      title={`Filter by "${term}"`}
-                    >
-                      <span>{term}</span>
-                      <button
-                        type="button"
-                        onClick={(e) => handleRemoveRecentSearch(term, e)}
-                        className="text-secondary group-hover:text-on-surface hover:text-error transition-colors -mr-0.5 cursor-pointer"
-                        title="Remove from history"
-                      >
-                        <span className="material-symbols-outlined text-[13px]">close</span>
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Search Result Feedback Indicator */}
-          {searchQuery.trim() && (
-            <div className="flex items-center justify-between px-1 text-[12px] text-secondary">
-              <span>
-                Showing <strong>{filteredGrievances.length}</strong> matching{' '}
-                {filteredGrievances.length === 1 ? 'grievance' : 'grievances'} for "{searchQuery}"
-              </span>
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="text-primary hover:underline font-semibold cursor-pointer"
-              >
-                Reset search
-              </button>
-            </div>
-          )}
-
           {/* Section Header with Segmented Filter Tabs */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
             <div className="flex items-center gap-2">
@@ -438,75 +184,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
             </div>
           </div>
 
-          {/* Priority Level Tags Filter Bar */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[12px]">
-            <span className="text-[11px] font-semibold text-secondary flex items-center gap-1 shrink-0 mr-1">
-              <span className="material-symbols-outlined text-[15px] text-primary">label_important</span>
-              Priority Tags:
-            </span>
-            <button
-              type="button"
-              onClick={() => setPriorityFilter('all')}
-              className={`px-2.5 py-1 rounded-lg font-medium transition-all shrink-0 cursor-pointer ${
-                priorityFilter === 'all'
-                  ? 'bg-primary text-on-primary font-semibold shadow-xs'
-                  : 'bg-surface-container hover:bg-surface-container-high text-secondary'
-              }`}
-            >
-              All Tags
-            </button>
-            <button
-              type="button"
-              onClick={() => setPriorityFilter(priorityFilter === 'High' ? 'all' : 'High')}
-              className={`px-2.5 py-1 rounded-lg font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1 border ${
-                priorityFilter === 'High'
-                  ? 'bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-200 border-orange-400 font-bold ring-2 ring-orange-400/50 shadow-xs'
-                  : 'bg-orange-50/70 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-900/50 hover:bg-orange-100/70'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[13px]">bolt</span>
-              <span>High ({highCount})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPriorityFilter(priorityFilter === 'Medium' ? 'all' : 'Medium')}
-              className={`px-2.5 py-1 rounded-lg font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1 border ${
-                priorityFilter === 'Medium'
-                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 border-amber-400 font-bold ring-2 ring-amber-400/50 shadow-xs'
-                  : 'bg-amber-50/70 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900/50 hover:bg-amber-100/70'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[13px]">swap_vert</span>
-              <span>Medium ({mediumCount})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPriorityFilter(priorityFilter === 'Low' ? 'all' : 'Low')}
-              className={`px-2.5 py-1 rounded-lg font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1 border ${
-                priorityFilter === 'Low'
-                  ? 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-400 font-bold ring-2 ring-slate-400/50 shadow-xs'
-                  : 'bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200/50'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[13px]">low_priority</span>
-              <span>Low ({lowCount})</span>
-            </button>
-            {criticalCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setPriorityFilter(priorityFilter === 'Critical' ? 'all' : 'Critical')}
-                className={`px-2.5 py-1 rounded-lg font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1 border ${
-                  priorityFilter === 'Critical'
-                    ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-200 border-rose-400 font-bold ring-2 ring-rose-400/50 shadow-xs'
-                    : 'bg-rose-50/70 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/50 hover:bg-rose-100/70'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[13px]">crisis_alert</span>
-                <span>Critical ({criticalCount})</span>
-              </button>
-            )}
-          </div>
-
           {/* Loading & Error States */}
           {isLoading && (
             <div className="p-8 rounded-xl bg-surface-container-lowest text-center flex flex-col items-center justify-center gap-2 border border-surface-container">
@@ -535,46 +212,29 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
           {!isLoading && !error && filteredGrievances.length === 0 && (
             <div className="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-surface-container flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center text-secondary mb-3">
-                <span className="material-symbols-outlined text-[32px]">
-                  {searchQuery.trim() ? 'search_off' : 'folder_open'}
-                </span>
+                <span className="material-symbols-outlined text-[32px]">folder_open</span>
               </div>
               <h4 className="text-[16px] font-semibold text-on-surface mb-1">
-                {searchQuery.trim()
-                  ? `No complaints matching "${searchQuery}"`
-                  : filterTab === 'all'
+                {filterTab === 'all'
                   ? 'No grievances lodged yet'
                   : filterTab === 'active'
                   ? 'No active grievances'
                   : 'No resolved grievances yet'}
               </h4>
               <p className="text-[13px] text-secondary max-w-xs mb-4">
-                {searchQuery.trim()
-                  ? 'Try searching with a different ticket ID (e.g. CF-00101), category keyword, or reset your search query.'
-                  : filterTab === 'all'
+                {filterTab === 'all'
                   ? 'Your reported issues will appear here. If you encounter any maintenance or facility issue on campus, let us know.'
                   : 'All your issues are currently up to date!'}
               </p>
-              {searchQuery.trim() ? (
+              {filterTab === 'all' && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="h-10 px-5 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary text-[13px] font-semibold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+                  onClick={() => onReportClick()}
+                  className="h-10 px-5 rounded-xl bg-primary-container text-on-primary text-[13px] font-medium flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">clear_all</span>
-                  <span>Clear Search</span>
+                  <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                  <span>Report an Issue</span>
                 </button>
-              ) : (
-                filterTab === 'all' && (
-                  <button
-                    type="button"
-                    onClick={() => onReportClick()}
-                    className="h-10 px-5 rounded-xl bg-primary-container text-on-primary text-[13px] font-medium flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                    <span>Report an Issue</span>
-                  </button>
-                )
               )}
             </div>
           )}
@@ -602,7 +262,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                 return (
                   <div
                     key={grievance.public_id}
-                    onClick={() => handleSelectTrackedGrievance(grievance)}
+                    onClick={() => onSelectGrievance(grievance.public_id)}
                     className={`group rounded-xl bg-surface-container-lowest p-4 shadow-xs border border-surface-container hover:border-surface-container-high hover:shadow-sm transition-all active:scale-[0.99] flex flex-col space-y-3 cursor-pointer ${getCardStatusBorder(
                       grievance.status
                     )}`}
@@ -717,31 +377,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               <div className="p-3 rounded-lg bg-surface-container-low border border-surface-container">
                 <span className="text-[20px] font-bold text-emerald-700 block">{resolvedCount}</span>
                 <span className="text-[11px] text-secondary">Resolved</span>
-              </div>
-            </div>
-
-            {/* Priority Tags Breakdown */}
-            <div className="pt-2 border-t border-surface-container flex flex-col gap-1.5">
-              <span className="text-[11px] font-semibold text-secondary uppercase tracking-wider">Priority Level Tags</span>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-200 border border-orange-200 dark:border-orange-900/50">
-                  <span className="material-symbols-outlined text-[12px]">bolt</span>
-                  High: {highCount}
-                </span>
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-900/50">
-                  <span className="material-symbols-outlined text-[12px]">swap_vert</span>
-                  Medium: {mediumCount}
-                </span>
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                  <span className="material-symbols-outlined text-[12px]">low_priority</span>
-                  Low: {lowCount}
-                </span>
-                {criticalCount > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/30 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-900/50">
-                    <span className="material-symbols-outlined text-[12px]">crisis_alert</span>
-                    Critical: {criticalCount}
-                  </span>
-                )}
               </div>
             </div>
           </div>

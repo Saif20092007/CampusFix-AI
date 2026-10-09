@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { PhotoUploader, UploadedFileState } from '../components/PhotoUploader';
-import { VoiceRecorder } from '../components/VoiceRecorder';
 import { api } from '../services/api';
-import { AiAnalysisResponse, PriorityLevel } from '../types';
+import { AiAnalysisResponse } from '../types';
 
 interface ReportIssueStep1Props {
   initialCategory?: string;
@@ -10,8 +9,7 @@ interface ReportIssueStep1Props {
     analysis: AiAnalysisResponse,
     description: string,
     location: string,
-    photos: UploadedFileState[],
-    taggedPriority?: PriorityLevel
+    photos: UploadedFileState[]
   ) => void;
   onCancel: () => void;
 }
@@ -26,51 +24,8 @@ export const ReportIssueStep1: React.FC<ReportIssueStep1Props> = ({
   );
   const [location, setLocation] = useState('');
   const [photos, setPhotos] = useState<UploadedFileState[]>([]);
-  const [taggedPriority, setTaggedPriority] = useState<PriorityLevel>('Medium');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
-  const [locationFeedback, setLocationFeedback] = useState<string | null>(null);
-
-  const campusLandmarks = [
-    'Hostel B (Boys)',
-    'Hostel C (Girls)',
-    'Main Academic Block A',
-    'Central Library (3rd Floor)',
-    'CSE / IT Lab Wing',
-    'Campus Cafeteria',
-    'Mechanical Workshop',
-    'Civil & Water Works Lab',
-  ];
-
-  const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationFeedback('Geolocation is not supported by your browser.');
-      return;
-    }
-
-    setIsLocating(true);
-    setLocationFeedback(null);
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setIsLocating(false);
-        const { latitude, longitude, accuracy } = pos.coords;
-        const formatted = `NMIET Campus (GPS: ${latitude.toFixed(4)}°N, ${longitude.toFixed(4)}°E)`;
-        setLocation(formatted);
-        setLocationFeedback(`📍 Location detected (accuracy ±${Math.round(accuracy)}m)`);
-      },
-      (err) => {
-        setIsLocating(false);
-        setLocationFeedback(`⚠️ Unable to retrieve GPS: ${err.message}. Select a spot below.`);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 30000,
-      }
-    );
-  };
 
   const charLength = description.trim().length;
   const isThresholdMet = charLength >= 20;
@@ -87,7 +42,7 @@ export const ReportIssueStep1: React.FC<ReportIssueStep1Props> = ({
 
     try {
       const analysis = await api.analyzeGrievance(description, location);
-      onAnalysisComplete(analysis, description, location, photos, taggedPriority);
+      onAnalysisComplete(analysis, description, location, photos);
     } catch (err: any) {
       setErrorMsg(err.message || 'AI analysis is temporarily unavailable.');
     } finally {
@@ -148,18 +103,6 @@ export const ReportIssueStep1: React.FC<ReportIssueStep1Props> = ({
             </span>
           </div>
 
-          {/* Voice-to-Text Recording Control */}
-          <VoiceRecorder
-            onAppendText={(recordedText) => {
-              setDescription((prev) => {
-                const trimmed = prev.trim();
-                if (!trimmed) return recordedText;
-                return `${trimmed} ${recordedText}`;
-              });
-            }}
-            disabled={isAnalyzing}
-          />
-
           <div className="relative w-full">
             <textarea
               id="issueDescription"
@@ -192,26 +135,11 @@ export const ReportIssueStep1: React.FC<ReportIssueStep1Props> = ({
           </div>
         </div>
 
-        {/* Location Field with GPS detection and campus quick picks */}
-        <div className="flex flex-col gap-2 pt-1">
-          <div className="flex items-center justify-between">
-            <label className="text-[13px] font-semibold text-on-surface" htmlFor="locationInput">
-              Location on Campus <span className="text-secondary font-normal text-[11px]">(Optional free-text / GPS)</span>
-            </label>
-            <button
-              type="button"
-              onClick={handleGetCurrentLocation}
-              disabled={isLocating}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary text-[11px] font-semibold transition-all cursor-pointer disabled:opacity-50"
-              title="Automatically detect current GPS location"
-            >
-              <span className={`material-symbols-outlined text-[15px] ${isLocating ? 'animate-spin' : ''}`}>
-                {isLocating ? 'progress_activity' : 'my_location'}
-              </span>
-              <span>{isLocating ? 'Locating...' : 'Get Location'}</span>
-            </button>
-          </div>
-
+        {/* Location Field (Optional free-text field, no landmark selector) */}
+        <div className="flex flex-col gap-1.5 pt-1">
+          <label className="text-[13px] font-semibold text-on-surface" htmlFor="locationInput">
+            Location on Campus <span className="text-secondary font-normal text-[11px]">(Optional free-text)</span>
+          </label>
           <div className="relative flex items-center w-full">
             <span className="material-symbols-outlined absolute left-3.5 text-[20px] text-secondary pointer-events-none">
               location_on
@@ -222,106 +150,12 @@ export const ReportIssueStep1: React.FC<ReportIssueStep1Props> = ({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g., Hostel B, 2nd floor east wing or Mech Workshop"
-              className="w-full h-12 pl-11 pr-24 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] placeholder:text-outline border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm transition-all"
+              className="w-full h-12 pl-11 pr-4 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] placeholder:text-outline border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm transition-all"
             />
-            {location && (
-              <button
-                type="button"
-                onClick={() => setLocation('')}
-                className="absolute right-3 text-secondary hover:text-on-surface"
-                title="Clear location"
-              >
-                <span className="material-symbols-outlined text-[18px]">cancel</span>
-              </button>
-            )}
           </div>
-
-          {locationFeedback && (
-            <div className="text-[11px] text-primary px-1 font-medium flex items-center gap-1">
-              <span>{locationFeedback}</span>
-            </div>
-          )}
-
-          {/* Quick Landmark Picker Pills */}
-          <div className="flex flex-col gap-1 pt-0.5">
-            <span className="text-[11px] text-secondary font-medium px-1">Common campus spots:</span>
-            <div className="flex flex-wrap gap-1.5">
-              {campusLandmarks.map((spot) => (
-                <button
-                  key={spot}
-                  type="button"
-                  onClick={() => setLocation(spot)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer border ${
-                    location === spot
-                      ? 'bg-primary-container text-on-primary border-primary'
-                      : 'bg-surface-container-lowest hover:bg-surface-container text-on-surface border-surface-container-high'
-                  }`}
-                >
-                  {spot}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Priority Level Tagging */}
-        <div className="flex flex-col gap-1.5 pt-1">
-          <label className="text-[12px] font-semibold text-on-surface-variant flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px] text-primary">label_important</span>
-              Tag Grievance Priority Level
-            </span>
-            <span className="text-[11px] text-secondary font-normal">Choose urgency</span>
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              {
-                level: 'Low' as PriorityLevel,
-                label: 'Low',
-                desc: 'Aesthetic / minor',
-                sla: '7 days',
-                icon: 'low_priority',
-                activeClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-400 dark:border-slate-500 ring-2 ring-slate-400 shadow-xs',
-              },
-              {
-                level: 'Medium' as PriorityLevel,
-                label: 'Medium',
-                desc: 'Standard repairs',
-                sla: '3 days',
-                icon: 'swap_vert',
-                activeClass: 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border-amber-400 ring-2 ring-amber-400 shadow-xs',
-              },
-              {
-                level: 'High' as PriorityLevel,
-                label: 'High',
-                desc: 'Urgent repairs',
-                sla: '48 hrs',
-                icon: 'bolt',
-                activeClass: 'bg-orange-50 dark:bg-orange-950/40 text-orange-900 dark:text-orange-200 border-orange-400 ring-2 ring-orange-400 shadow-xs',
-              },
-            ].map((p) => {
-              const isSelected = taggedPriority === p.level;
-              return (
-                <button
-                  key={p.level}
-                  type="button"
-                  onClick={() => setTaggedPriority(p.level)}
-                  className={`p-2.5 rounded-xl border flex flex-col items-center text-center transition-all cursor-pointer ${
-                    isSelected
-                      ? p.activeClass
-                      : 'bg-surface-container-lowest border-surface-container-high hover:bg-surface-container text-on-surface'
-                  }`}
-                >
-                  <div className="flex items-center gap-1 font-semibold text-[13px]">
-                    <span className="material-symbols-outlined text-[16px]">{p.icon}</span>
-                    <span>{p.label}</span>
-                  </div>
-                  <span className="text-[10px] text-secondary mt-0.5">{p.desc}</span>
-                  <span className="text-[10px] font-mono text-secondary font-medium mt-0.5">SLA: {p.sla}</span>
-                </button>
-              );
-            })}
-          </div>
+          <span className="text-[11px] text-secondary px-1">
+            If left empty, the AI will try to extract the location from your description.
+          </span>
         </div>
 
         {/* Complaint Photo Upload (Student-only, max 3) */}

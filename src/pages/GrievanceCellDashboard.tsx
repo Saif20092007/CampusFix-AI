@@ -5,7 +5,6 @@ import { Grievance, Department } from '../types';
 import { StatusChip } from '../components/StatusChip';
 import { PriorityChip } from '../components/PriorityChip';
 import { SlaBadge } from '../components/SlaBadge';
-import { generateMonthlyReportPdf } from '../utils/monthlyReportPdf';
 
 interface GrievanceCellDashboardProps {
   onSelectGrievance: (publicId: string) => void;
@@ -173,49 +172,6 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
     }, 4500);
   };
 
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-
-  const handleDownloadMonthlyReport = async () => {
-    setIsGeneratingReport(true);
-    try {
-      let reportGrievanceItems = grievances;
-      try {
-        const fullData = await api.getGrievances({ limit: 1000 });
-        if (fullData && fullData.items && fullData.items.length > 0) {
-          reportGrievanceItems = fullData.items;
-        }
-      } catch (err) {
-        console.warn('Could not fetch full grievances for monthly report, using current list', err);
-      }
-
-      let depts = departments;
-      if (!depts || depts.length === 0) {
-        try {
-          depts = await api.getDepartments();
-        } catch {
-          depts = [];
-        }
-      }
-
-      const { filename, doc } = generateMonthlyReportPdf({
-        grievances: reportGrievanceItems,
-        departments: depts,
-        user,
-      });
-
-      doc.save(filename);
-      setExportToast(`Downloaded monthly summary report: ${filename}`);
-    } catch (err: any) {
-      console.error('Failed to generate monthly PDF report:', err);
-      setExportToast('Failed to generate PDF report. Please try again.');
-    } finally {
-      setIsGeneratingReport(false);
-      setTimeout(() => {
-        setExportToast(null);
-      }, 5000);
-    }
-  };
-
   const handlePushAnnouncement = () => {
     if (!announcementText.trim()) return;
     setAnnouncementSent(true);
@@ -246,7 +202,7 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
 
   return (
     <div className="flex flex-col w-full pb-20 space-y-6 animate-fade-in">
-      {/* Operational Breadcrumb & Context (Stitch Image 7) */}
+      {/* Operational Breadcrumb & Context */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[11px] uppercase tracking-wider text-secondary font-semibold">
@@ -254,20 +210,17 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
           </span>
           <span className="text-secondary text-[12px]">/</span>
           <span className="text-[13px] font-semibold text-primary">
-            Master Triage & Ticket Dispatch
-          </span>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed text-[11px] font-medium">
-            Auto-Sync 15s
+            Master Triage &amp; Ticket Dispatch
           </span>
         </div>
         <div className="flex items-center gap-4 text-[11px] text-secondary">
           <span className="inline-flex items-center gap-1">
-            <span className="material-symbols-outlined text-[15px] text-tertiary-container">schedule</span>
-            <span>Real-Time Shift: Morning (08:00 - 16:30 IST)</span>
+            <span className="material-symbols-outlined text-[15px] text-secondary">schedule</span>
+            <span>{new Date().toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</span>
           </span>
-          <span className="hidden sm:inline-flex items-center gap-1">
-            <span className="material-symbols-outlined text-[15px]">sensors</span>
-            <span>Gateways Active: 14 Nodes</span>
+          <span className="inline-flex items-center gap-1">
+            <span className="material-symbols-outlined text-[15px] text-tertiary-container">receipt_long</span>
+            <span>{grievances.length} tickets in view</span>
           </span>
         </div>
       </div>
@@ -285,30 +238,31 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
               <span className="text-[26px] font-bold text-on-surface tracking-tight">{totalCount}</span>
-              <span className="inline-flex items-center text-[12px] font-semibold text-tertiary-container">
-                <span className="material-symbols-outlined text-[13px]">trending_up</span> +5 today
-              </span>
+              <span className="text-[11px] text-secondary">total tickets</span>
             </div>
             <div className="w-full bg-surface-container h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-primary-container h-full rounded-full" style={{ width: '72%' }}></div>
+              <div
+                className="bg-primary-container h-full rounded-full"
+                style={{ width: totalCount > 0 ? `${Math.min(100, Math.round(((totalCount - overdueCount) / totalCount) * 100))}%` : '0%' }}
+              ></div>
             </div>
           </div>
         </div>
 
-        {/* Stat 2: AI Triage Precision */}
+        {/* Stat 2: Overdue Tickets */}
         <div className="p-4 rounded-xl bg-surface-container-lowest shadow-sm border border-surface-container flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-semibold text-secondary">AI Triage Precision</span>
-            <div className="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center text-tertiary-container">
-              <span className="material-symbols-outlined text-[16px]">smart_toy</span>
+            <span className="text-[12px] font-semibold text-secondary">Overdue Tickets</span>
+            <div className="w-7 h-7 rounded-lg bg-error-container flex items-center justify-center text-error">
+              <span className="material-symbols-outlined text-[16px]">alarm_off</span>
             </div>
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-[26px] font-bold text-on-surface tracking-tight">94.2%</span>
-              <span className="text-[11px] text-secondary">target &gt;90%</span>
+              <span className="text-[26px] font-bold text-error tracking-tight">{String(overdueCount).padStart(2, '0')}</span>
+              <span className="text-[11px] text-secondary">past SLA deadline</span>
             </div>
-            <p className="text-[11px] text-secondary mt-1">40 auto-assigned with zero human correction</p>
+            <p className="text-[11px] text-secondary mt-1">Require immediate attention or escalation</p>
           </div>
         </div>
 
@@ -354,20 +308,22 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
           </div>
         </div>
 
-        {/* Stat 5: Mean Turnaround */}
+        {/* Stat 5: Resolved Count */}
         <div className="p-4 rounded-xl bg-surface-container-lowest shadow-sm border border-surface-container flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-semibold text-secondary">Mean Turnaround</span>
+            <span className="text-[12px] font-semibold text-secondary">Resolved</span>
             <div className="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-[16px]">timelapse</span>
+              <span className="material-symbols-outlined text-[16px]">check_circle</span>
             </div>
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-[26px] font-bold text-on-surface tracking-tight">11.4h</span>
-              <span className="text-[11px] text-tertiary-container font-semibold">Within 24h</span>
+              <span className="text-[26px] font-bold text-on-surface tracking-tight">{String(resolvedCount).padStart(2, '0')}</span>
+              <span className="text-[11px] text-secondary">closed</span>
             </div>
-            <p className="text-[11px] text-secondary mt-1">-2.1h vs previous campus week</p>
+            <p className="text-[11px] text-secondary mt-1">
+              {totalCount > 0 ? `${Math.round((resolvedCount / totalCount) * 100)}% resolution rate` : 'No tickets yet'}
+            </p>
           </div>
         </div>
       </section>
@@ -396,19 +352,6 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
           </form>
 
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            <button
-              type="button"
-              onClick={handleDownloadMonthlyReport}
-              disabled={isGeneratingReport}
-              className="h-10 px-3.5 rounded-xl bg-primary text-on-primary hover:bg-primary/90 flex items-center justify-center gap-1.5 text-[13px] font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-60"
-              title="Download PDF summary report of resolved vs pending grievances for the current month"
-            >
-              <span className="material-symbols-outlined text-[16px]">
-                {isGeneratingReport ? 'hourglass_top' : 'picture_as_pdf'}
-              </span>
-              <span>{isGeneratingReport ? 'Generating...' : 'Download Report'}</span>
-            </button>
-
             <button
               type="button"
               onClick={() => handleExportCsv(false)}
@@ -507,8 +450,8 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
               className="w-full h-10 px-3 pr-8 rounded-lg bg-surface-container-low text-on-surface text-[12px] border border-surface-container focus:outline-none appearance-none cursor-pointer"
             >
               <option value="all">Any Window</option>
-              <option value="overdue">Breached (&gt;0h)</option>
-              <option value="due_soon">&lt; 6 Hours Left</option>
+              <option value="overdue">Breached (Overdue)</option>
+              <option value="due_soon">Due Soon (25% window)</option>
             </select>
             <span className="material-symbols-outlined absolute right-2.5 bottom-2 text-secondary pointer-events-none text-[16px]">
               keyboard_arrow_down
@@ -647,27 +590,15 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
                     </button>
                   </>
                 ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => handleExportCsv(false)}
-                      className="px-2.5 py-1 rounded-lg bg-surface text-on-surface text-[12px] font-medium border border-surface-container hover:bg-surface-container flex items-center gap-1 shadow-xs cursor-pointer transition-colors"
-                      title="Export all grievances in current view to CSV"
-                    >
-                      <span className="material-symbols-outlined text-[15px] text-primary">file_download</span>
-                      <span>Export CSV ({grievances.length})</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDownloadMonthlyReport}
-                      disabled={isGeneratingReport}
-                      className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-[12px] font-semibold border border-primary/20 hover:bg-primary/20 flex items-center gap-1 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
-                      title="Download PDF summary report of resolved vs pending grievances for current month"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">picture_as_pdf</span>
-                      <span>Download Report</span>
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => handleExportCsv(false)}
+                    className="px-2.5 py-1 rounded-lg bg-surface text-on-surface text-[12px] font-medium border border-surface-container hover:bg-surface-container flex items-center gap-1 shadow-xs cursor-pointer transition-colors"
+                    title="Export all grievances in current view to CSV"
+                  >
+                    <span className="material-symbols-outlined text-[15px] text-primary">file_download</span>
+                    <span>Export CSV ({grievances.length})</span>
+                  </button>
                 )}
               </div>
             </div>
@@ -835,172 +766,42 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
             </div>
           </div>
 
-          {/* Campus Live Infrastructure Activity Feed */}
-          <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[18px] text-primary">sensors</span>
-                <h3 className="text-[14px] font-semibold text-on-surface">Campus Infrastructure Activity Feed</h3>
-              </div>
-              <span className="text-[11px] text-secondary">Verified Sensor & Student Submissions</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="p-3 rounded-lg bg-surface-container-low border border-surface-container flex items-start gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-error-container text-error flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[15px]">water_drop</span>
-                </div>
-                <div className="min-w-0">
-                  <span className="font-semibold text-[13px] text-on-surface block truncate">Hostel D Sump Sensor</span>
-                  <p className="text-[11px] text-error font-medium">Critical level dropped below 15%</p>
-                  <span className="text-[10px] text-secondary">12 mins ago · Auto-Logged</span>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-surface-container-low border border-surface-container flex items-start gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-[#D1FAE5] text-[#065F46] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[15px]">dns</span>
-                </div>
-                <div className="min-w-0">
-                  <span className="font-semibold text-[13px] text-on-surface block truncate">Core Switch Block B</span>
-                  <p className="text-[11px] text-[#065F46] font-medium">VLAN 20 latency normalized (12ms)</p>
-                  <span className="text-[10px] text-secondary">38 mins ago · Auto-Closed</span>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-surface-container-low border border-surface-container flex items-start gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
-                  <span className="material-symbols-outlined text-[15px]">qr_code_scanner</span>
-                </div>
-                <div className="min-w-0">
-                  <span className="font-semibold text-[13px] text-on-surface block truncate">Room 304 AC Triage</span>
-                  <p className="text-[11px] text-secondary">QR ticket submitted via student app</p>
-                  <span className="text-[10px] text-secondary">1 hr ago · Assigned to Santosh S.</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
+      </div>
 
         {/* Right Column: Side Command Widgets (3 cols) */}
         <div className="xl:col-span-3 flex flex-col gap-4">
-          {/* SLA Resolution Health Gauge Card */}
+          {/* Live SLA Summary */}
           <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-secondary">
-                SLA Resolution Health
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-surface-container-high text-tertiary-container text-[11px] font-bold">
-                Target 90%
-              </span>
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="material-symbols-outlined text-[18px] text-primary">monitor_heart</span>
+              <span className="text-[13px] font-semibold text-on-surface">Live SLA Summary</span>
             </div>
-
-            <div className="flex items-center gap-3 my-2">
-              <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
-                <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-surface-container"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3.5"
-                  ></path>
-                  <path
-                    className="text-primary-container"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeDasharray="92, 100"
-                    strokeLinecap="round"
-                    strokeWidth="3.5"
-                  ></path>
-                </svg>
-                <div className="absolute flex flex-col items-center justify-center">
-                  <span className="text-[16px] font-bold text-on-surface">92%</span>
-                </div>
+            <div className="space-y-2 text-[12px]">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-error-container/30">
+                <span className="text-secondary">Overdue</span>
+                <span className="font-bold text-error">{String(overdueCount).padStart(2, '0')}</span>
               </div>
-
-              <div className="flex flex-col">
-                <span className="text-[13px] font-semibold text-on-surface leading-snug">
-                  Institutional Target Met
-                </span>
-                <span className="text-[11px] text-secondary mt-0.5">
-                  Resolving inside designated turnaround SLA
-                </span>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+                <span className="text-secondary">Due Soon</span>
+                <span className="font-bold text-amber-700">{String(dueSoonCount).padStart(2, '0')}</span>
               </div>
-            </div>
-
-            <div className="pt-2 border-t border-surface-container flex justify-between text-[11px] text-secondary">
-              <span>Weekly Target: <strong>90.0%</strong></span>
-              <span className="text-tertiary-container font-semibold">+1.8% vs last cycle</span>
-            </div>
-          </div>
-
-          {/* Department Workload Distribution */}
-          <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[17px] text-primary">groups_3</span>
-                <h3 className="text-[14px] font-semibold text-on-surface">Queue Distribution</h3>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+                <span className="text-secondary">Escalated</span>
+                <span className="font-bold text-error">{String(escalatedCount).padStart(2, '0')}</span>
               </div>
-              <span className="text-[11px] text-secondary">{totalCount} Active</span>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <div className="flex items-center justify-between mb-1 text-[12px]">
-                  <span className="font-medium text-on-surface flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px] text-amber-600">bolt</span>
-                    <span>Electrical</span>
-                  </span>
-                  <span className="font-semibold text-secondary">14 tickets (33%)</span>
-                </div>
-                <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-amber-600 h-full rounded-full" style={{ width: '70%' }}></div>
-                </div>
-                <div className="flex justify-between items-center text-[10px] text-secondary mt-0.5">
-                  <span>Crew active: 4 / 6</span>
-                  <span className="text-amber-800 font-medium">1 near breach</span>
-                </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+                <span className="text-secondary">In Progress</span>
+                <span className="font-bold text-on-surface">{String(inProgressCount).padStart(2, '0')}</span>
               </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1 text-[12px]">
-                  <span className="font-medium text-on-surface flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px] text-primary">handyman</span>
-                    <span>Civil & Sanitation</span>
-                  </span>
-                  <span className="font-semibold text-secondary">12 tickets (28%)</span>
-                </div>
-                <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-primary-container h-full rounded-full" style={{ width: '60%' }}></div>
-                </div>
-                <div className="flex justify-between items-center text-[10px] text-secondary mt-0.5">
-                  <span>Crew active: 5 / 5</span>
-                  <span className="text-error font-semibold">1 Escalated</span>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1 text-[12px]">
-                  <span className="font-medium text-on-surface flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px] text-tertiary">router</span>
-                    <span>IT & Campus Net</span>
-                  </span>
-                  <span className="font-semibold text-secondary">11 tickets (26%)</span>
-                </div>
-                <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-tertiary-container h-full rounded-full" style={{ width: '55%' }}></div>
-                </div>
-                <div className="flex justify-between items-center text-[10px] text-secondary mt-0.5">
-                  <span>Crew active: 3 / 4</span>
-                  <span>1 unassigned</span>
-                </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+                <span className="text-secondary">Resolved</span>
+                <span className="font-bold text-primary">{String(resolvedCount).padStart(2, '0')}</span>
               </div>
             </div>
           </div>
 
-          {/* Institutional Resolution Protocol */}
+          {/* Institutional SLA Standards */}
           <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container space-y-2.5">
             <div className="flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[18px] text-primary">policy</span>
@@ -1012,42 +813,38 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
             <div className="space-y-1.5 text-[11px]">
               <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
                 <span className="font-semibold text-error">Critical Tier</span>
-                <span className="font-mono text-secondary">24 hours</span>
+                <span className="font-mono text-secondary">24h &middot; Due Soon &lt;6h</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
                 <span className="font-semibold text-amber-700">High Tier</span>
-                <span className="font-mono text-secondary">48 hours</span>
+                <span className="font-mono text-secondary">48h &middot; Due Soon &lt;12h</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
                 <span className="font-semibold text-primary">Medium Tier</span>
-                <span className="font-mono text-secondary">72 hours</span>
+                <span className="font-mono text-secondary">72h &middot; Due Soon &lt;18h</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
                 <span className="font-semibold text-secondary">Low Tier</span>
-                <span className="font-mono text-secondary">168 hours</span>
+                <span className="font-mono text-secondary">168h &middot; Due Soon &lt;42h</span>
               </div>
             </div>
           </div>
 
-          {/* AI NLP Engine Status */}
+          {/* AI Classification Engine */}
           <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[18px] text-tertiary-container">psychology</span>
-                <span className="text-[13px] font-semibold text-on-surface">NLP Engine Status</span>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span>
+            <div className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[18px] text-tertiary-container">psychology</span>
+              <span className="text-[13px] font-semibold text-on-surface">AI Classification</span>
             </div>
             <p className="text-[11px] text-secondary leading-relaxed">
-              Multi-lingual student grievance classifier v2.4 initialized with Marathi & Hinglish colloquial detection.
+              Google Gemini classifies each complaint into department, priority, and keywords. Falls back to keyword matching if AI is unavailable.
             </p>
-            <div className="p-2 rounded bg-surface-container-low text-[11px] text-secondary font-mono flex items-center justify-between border border-surface-container">
-              <span>Latent Query Latency</span>
-              <span className="text-on-surface font-semibold">142ms</span>
+            <div className="p-2 rounded bg-surface-container-low text-[11px] text-secondary flex items-center justify-between border border-surface-container">
+              <span>Mode</span>
+              <span className="text-on-surface font-semibold">Gemini + Keyword Fallback</span>
             </div>
           </div>
         </div>
-      </div>
 
       {/* Reassign Modal */}
       {reassignGrievanceId && (

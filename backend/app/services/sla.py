@@ -10,11 +10,31 @@ DEFAULT_SLA_HOURS = {
     "Low": 168,
 }
 
+# Due Soon = final 25% of the SLA window per priority
+# Critical: 24h * 25% = 6h
+# High:     48h * 25% = 12h
+# Medium:   72h * 25% = 18h
+# Low:     168h * 25% = 42h
+DUE_SOON_FRACTION = 0.25
+
 def compute_due_at(created_at: datetime, priority: str, sla_rules: List[SlaRule]) -> datetime:
     """Calculates due_at deadline based on priority and college SLA rules."""
     rule = next((r for r in sla_rules if r.priority.lower() == priority.lower()), None)
     hours = rule.hours if rule else DEFAULT_SLA_HOURS.get(priority, 72)
     return created_at + timedelta(hours=hours)
+
+def _get_due_soon_hours(grievance: Grievance) -> float:
+    """
+    Returns the Due Soon threshold for this grievance in hours.
+    Due Soon = 25% of total SLA window (due_at - created_at).
+    Falls back to priority-based default if timestamps are inconsistent.
+    """
+    total_window_seconds = (grievance.due_at - grievance.created_at).total_seconds()
+    if total_window_seconds > 0:
+        return (total_window_seconds * DUE_SOON_FRACTION) / 3600.0
+    # Fallback using priority defaults
+    hours = DEFAULT_SLA_HOURS.get(grievance.priority, 72)
+    return hours * DUE_SOON_FRACTION
 
 def calculate_sla(grievance: Grievance) -> SlaStatusOut:
     """Calculates real-time SLA status and human readable countdown text for a complaint."""
@@ -44,12 +64,15 @@ def calculate_sla(grievance: Grievance) -> SlaStatusOut:
     diff_seconds = (due_at - now).total_seconds()
     diff_hours = diff_seconds / 3600.0
 
+    # Due Soon threshold: 25% of total SLA window for this grievance's priority
+    due_soon_hours = _get_due_soon_hours(grievance)
+
     if diff_seconds < 0:
         status = "OVERDUE"
         is_overdue = True
         overdue_hours = abs(round(diff_hours, 1))
         human_text = f"Overdue by {overdue_hours}h"
-    elif diff_hours < 6:
+    elif diff_hours <= due_soon_hours:
         status = "DUE_SOON"
         is_overdue = False
         remaining_hours = round(diff_hours, 1)

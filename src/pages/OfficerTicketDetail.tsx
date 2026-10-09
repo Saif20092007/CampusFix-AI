@@ -6,7 +6,6 @@ import { StatusChip } from '../components/StatusChip';
 import { PriorityChip } from '../components/PriorityChip';
 import { SlaBadge } from '../components/SlaBadge';
 import { PhotoModal } from '../components/PhotoModal';
-import { QuickReplySection } from '../components/QuickReplySection';
 
 interface OfficerTicketDetailProps {
   publicId: string;
@@ -331,13 +330,6 @@ export const OfficerTicketDetail: React.FC<OfficerTicketDetailProps> = ({
               )}
             </div>
           </div>
-
-          {/* Quick Reply for Staff */}
-          <QuickReplySection
-            publicId={grievance.public_id}
-            onReplySent={fetchDetail}
-            disabled={grievance.status === 'RESOLVED'}
-          />
 
           {/* Grievance Progression Audit Timeline */}
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-surface-container space-y-4">

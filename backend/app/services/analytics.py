@@ -4,6 +4,15 @@ from sqlalchemy.orm import Session
 from app.models import Grievance, Category, Department, User
 from app.schemas import AnalyticsSummaryOut, AnalyticsTrendPoint
 
+# SLA window hours by priority (must match sla.py)
+SLA_HOURS = {
+    "Critical": 24,
+    "High": 48,
+    "Medium": 72,
+    "Low": 168,
+}
+DUE_SOON_FRACTION = 0.25  # Due Soon = final 25% of SLA window
+
 def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
     """Generates institutional compliance analytics strictly scoped to user's college using Pandas."""
     col_id = user.college_id
@@ -40,7 +49,7 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
             resolved=0,
             overdue=0,
             due_soon=0,
-            sla_compliance=100,
+            sla_compliance=0,  # No resolved complaints → 0% (not 100%)
             category_counts=category_counts,
             department_counts=department_counts,
             priority_counts=priority_counts,
@@ -53,6 +62,8 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
     dept_map = {d.id: d.name for d in departments}
 
     for g in grievances:
+        sla_window_hours = SLA_HOURS.get(g.priority, 72)
+        due_soon_threshold_hours = sla_window_hours * DUE_SOON_FRACTION
         records.append({
             "id": g.id,
             "status": g.status,
@@ -62,6 +73,7 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
             "due_at": g.due_at,
             "created_at": g.created_at,
             "resolved_at": g.resolved_at,
+            "due_soon_threshold_hours": due_soon_threshold_hours,
         })
 
     df = pd.DataFrame(records)
@@ -75,9 +87,14 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
     overdue_mask = (df["status"] != "RESOLVED") & (df["due_at"] < now)
     overdue = int(overdue_mask.sum())
 
-    # Due soon count (non-resolved where 0 <= due_at - now < 6 hours)
-    six_hours_later = now + timedelta(hours=6)
-    due_soon_mask = (df["status"] != "RESOLVED") & (df["due_at"] >= now) & (df["due_at"] <= six_hours_later)
+    # Due soon: non-resolved, not overdue, within final 25% of SLA window
+    # hours_remaining = (due_at - now) in hours; must be <= due_soon_threshold for this priority
+    df["hours_remaining"] = (df["due_at"] - now).dt.total_seconds() / 3600.0
+    due_soon_mask = (
+        (df["status"] != "RESOLVED") &
+        (df["hours_remaining"] >= 0) &
+        (df["hours_remaining"] <= df["due_soon_threshold_hours"])
+    )
     due_soon = int(due_soon_mask.sum())
 
     # Category counts
@@ -99,13 +116,14 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
         if prio in priority_counts:
             priority_counts[prio] = int(count)
 
-    # SLA compliance rate
-    resolved_df = df[df["status"] == "RESOLVED"]
+    # SLA compliance rate — based on RESOLVED complaints only
+    # If no resolved complaints, return 0 (not 100% — that would be misleading)
+    resolved_df = df[df["status"] == "RESOLVED"].copy()
     if len(resolved_df) > 0:
         resolved_on_time = (resolved_df["resolved_at"] <= resolved_df["due_at"]).sum()
         sla_compliance = int(round((resolved_on_time / len(resolved_df)) * 100))
     else:
-        sla_compliance = int(round(((total - overdue) / total) * 100)) if total > 0 else 100
+        sla_compliance = 0  # No resolved complaints — cannot claim compliance
 
     # 30-day Trend
     df["created_date"] = pd.to_datetime(df["created_at"]).dt.date
@@ -133,59 +151,3 @@ def generate_analytics_summary(user: User, db: Session) -> AnalyticsSummaryOut:
         priority_counts=priority_counts,
         trend=trend,
     )
-
-
-def export_grievances_csv(user: User, db: Session) -> str:
-    """Generates a comprehensive CSV export of all grievances in the user's college using Pandas."""
-    col_id = user.college_id
-    categories = {c.id: c.name for c in db.query(Category).filter(Category.college_id == col_id).all()}
-    departments = {d.id: d.name for d in db.query(Department).filter(Department.college_id == col_id).all()}
-    students = {u.id: u for u in db.query(User).filter(User.college_id == col_id).all()}
-
-    grievances = db.query(Grievance).filter(Grievance.college_id == col_id).order_by(Grievance.id.desc()).all()
-
-    now = datetime.utcnow()
-    records = []
-    for g in grievances:
-        st = students.get(g.student_id)
-        # Calculate SLA status
-        if g.status == "RESOLVED":
-            sla_status = "RESOLVED_ON_TIME" if g.resolved_at and g.resolved_at <= g.due_at else "RESOLVED_LATE"
-        elif g.due_at < now:
-            sla_status = "OVERDUE"
-        elif g.due_at <= now + timedelta(hours=6):
-            sla_status = "DUE_SOON"
-        else:
-            sla_status = "ON_TIME"
-
-        records.append({
-            "Ticket ID": g.display_no,
-            "Summary": g.summary,
-            "Description": g.description,
-            "Category": categories.get(g.category_id, "Other"),
-            "Department": departments.get(g.department_id, "Other"),
-            "Assigned To": g.assigned_to_name or "Unassigned",
-            "Priority": g.priority,
-            "Status": g.status,
-            "Student Name": st.name if st else "Unknown",
-            "Student Dept": st.academic_department if st and st.academic_department else "N/A",
-            "Student Year": st.year if st and st.year else "N/A",
-            "Student Division": st.division if st and st.division else "N/A",
-            "Location": g.location,
-            "Submitted At": g.created_at.strftime("%Y-%m-%d %H:%M:%S") if g.created_at else "",
-            "Due Date": g.due_at.strftime("%Y-%m-%d %H:%M:%S") if g.due_at else "",
-            "SLA Status": sla_status,
-            "Resolved At": g.resolved_at.strftime("%Y-%m-%d %H:%M:%S") if g.resolved_at else "",
-        })
-
-    if not records:
-        df = pd.DataFrame(columns=[
-            "Ticket ID", "Summary", "Description", "Category", "Department",
-            "Assigned To", "Priority", "Status", "Student Name", "Student Dept",
-            "Student Year", "Student Division", "Location", "Submitted At",
-            "Due Date", "SLA Status", "Resolved At"
-        ])
-    else:
-        df = pd.DataFrame(records)
-
-    return df.to_csv(index=False)

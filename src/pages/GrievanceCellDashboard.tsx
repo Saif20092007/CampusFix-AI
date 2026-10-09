@@ -5,6 +5,7 @@ import { Grievance, Department } from '../types';
 import { StatusChip } from '../components/StatusChip';
 import { PriorityChip } from '../components/PriorityChip';
 import { SlaBadge } from '../components/SlaBadge';
+import { generateMonthlyReportPdf } from '../utils/monthlyReportPdf';
 
 interface GrievanceCellDashboardProps {
   onSelectGrievance: (publicId: string) => void;
@@ -170,6 +171,49 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
     setTimeout(() => {
       setExportToast(null);
     }, 4500);
+  };
+
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+
+  const handleDownloadMonthlyReport = async () => {
+    setIsGeneratingReport(true);
+    try {
+      let reportGrievanceItems = grievances;
+      try {
+        const fullData = await api.getGrievances({ limit: 1000 });
+        if (fullData && fullData.items && fullData.items.length > 0) {
+          reportGrievanceItems = fullData.items;
+        }
+      } catch (err) {
+        console.warn('Could not fetch full grievances for monthly report, using current list', err);
+      }
+
+      let depts = departments;
+      if (!depts || depts.length === 0) {
+        try {
+          depts = await api.getDepartments();
+        } catch {
+          depts = [];
+        }
+      }
+
+      const { filename, doc } = generateMonthlyReportPdf({
+        grievances: reportGrievanceItems,
+        departments: depts,
+        user,
+      });
+
+      doc.save(filename);
+      setExportToast(`Downloaded monthly summary report: ${filename}`);
+    } catch (err: any) {
+      console.error('Failed to generate monthly PDF report:', err);
+      setExportToast('Failed to generate PDF report. Please try again.');
+    } finally {
+      setIsGeneratingReport(false);
+      setTimeout(() => {
+        setExportToast(null);
+      }, 5000);
+    }
   };
 
   const handlePushAnnouncement = () => {
@@ -352,6 +396,19 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
           </form>
 
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <button
+              type="button"
+              onClick={handleDownloadMonthlyReport}
+              disabled={isGeneratingReport}
+              className="h-10 px-3.5 rounded-xl bg-primary text-on-primary hover:bg-primary/90 flex items-center justify-center gap-1.5 text-[13px] font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-60"
+              title="Download PDF summary report of resolved vs pending grievances for the current month"
+            >
+              <span className="material-symbols-outlined text-[16px]">
+                {isGeneratingReport ? 'hourglass_top' : 'picture_as_pdf'}
+              </span>
+              <span>{isGeneratingReport ? 'Generating...' : 'Download Report'}</span>
+            </button>
+
             <button
               type="button"
               onClick={() => handleExportCsv(false)}
@@ -590,15 +647,27 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
                     </button>
                   </>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleExportCsv(false)}
-                    className="px-2.5 py-1 rounded-lg bg-surface text-on-surface text-[12px] font-medium border border-surface-container hover:bg-surface-container flex items-center gap-1 shadow-xs cursor-pointer transition-colors"
-                    title="Export all grievances in current view to CSV"
-                  >
-                    <span className="material-symbols-outlined text-[15px] text-primary">file_download</span>
-                    <span>Export CSV ({grievances.length})</span>
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleExportCsv(false)}
+                      className="px-2.5 py-1 rounded-lg bg-surface text-on-surface text-[12px] font-medium border border-surface-container hover:bg-surface-container flex items-center gap-1 shadow-xs cursor-pointer transition-colors"
+                      title="Export all grievances in current view to CSV"
+                    >
+                      <span className="material-symbols-outlined text-[15px] text-primary">file_download</span>
+                      <span>Export CSV ({grievances.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadMonthlyReport}
+                      disabled={isGeneratingReport}
+                      className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-[12px] font-semibold border border-primary/20 hover:bg-primary/20 flex items-center gap-1 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
+                      title="Download PDF summary report of resolved vs pending grievances for current month"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">picture_as_pdf</span>
+                      <span>Download Report</span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>

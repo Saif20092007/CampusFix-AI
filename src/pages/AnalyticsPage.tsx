@@ -105,15 +105,15 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onBack }) => {
         escapeCsv(g.display_no),
         escapeCsv(g.summary),
         escapeCsv(g.description),
-        escapeCsv(g.category?.name || 'Other'),
-        escapeCsv(g.department?.name || 'Other'),
+        escapeCsv(g.category_name || 'Other'),
+        escapeCsv(g.department_name || 'Other'),
         escapeCsv(g.priority),
         escapeCsv(g.status),
         escapeCsv(g.location),
-        escapeCsv(g.student?.name || 'Student'),
-        escapeCsv(g.student?.academic_department || 'N/A'),
-        escapeCsv(g.student?.year || 'N/A'),
-        escapeCsv(g.student?.division || 'N/A'),
+        escapeCsv(g.student?.full_name || g.student?.first_name || g.student_name || 'Student'),
+        escapeCsv(g.student?.academic_department || g.student_academic_dept || 'N/A'),
+        escapeCsv(g.student?.year || g.student_year || 'N/A'),
+        escapeCsv(g.student?.division || g.student_division || 'N/A'),
         escapeCsv(g.created_at),
         escapeCsv(g.due_at),
         escapeCsv(g.sla?.status || 'N/A'),
@@ -326,7 +326,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ onBack }) => {
         const truncatedSummary =
           (g.summary || '').length > 28 ? (g.summary || '').substring(0, 26) + '...' : g.summary || '';
         doc.text(truncatedSummary, 42, currentY + 4);
-        const deptName = g.department?.name || 'General';
+        const deptName = g.department_name || 'General';
         const truncatedDept = deptName.length > 20 ? deptName.substring(0, 18) + '...' : deptName;
         doc.text(truncatedDept, 98, currentY + 4);
         doc.text(g.priority, 142, currentY + 4);

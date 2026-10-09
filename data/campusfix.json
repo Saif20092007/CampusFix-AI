@@ -392,6 +392,18 @@
       "note": "Complaint has remained unattended beyond expected SLA due to vendor supply chain delay.",
       "is_public": false,
       "created_at": "2026-10-06T22:24:06.749Z"
+    },
+    {
+      "id": 8,
+      "grievance_id": 1,
+      "actor_id": 2,
+      "actor_name": "Santosh Shinde",
+      "actor_role": "OFFICER",
+      "status": null,
+      "kind": "PUBLIC_UPDATE",
+      "note": "Our department is actively looking into this issue and reviewing the site requirements for resolution.",
+      "is_public": true,
+      "created_at": "2026-10-09T15:39:12.437Z"
     }
   ],
   "notifications": [
@@ -444,6 +456,16 @@
       "message": "New high-priority ticket CF-00124 assigned to Electrical Maintenance.",
       "read": false,
       "created_at": "2026-10-06T17:24:06.749Z"
+    },
+    {
+      "id": 7,
+      "user_id": 1,
+      "grievance_id": 1,
+      "public_id": "cf-00124-nmiet-8a7b",
+      "display_no": "CF-00124",
+      "message": "Update on CF-00124: \"Our department is actively looking into this issue and reviewing the site requir\"",
+      "read": false,
+      "created_at": "2026-10-09T15:39:12.437Z"
     }
   ],
   "attachments": [
@@ -463,8 +485,8 @@
     "department_id": 8,
     "category_id": 12,
     "grievance_id": 6,
-    "status_history_id": 7,
-    "notification_id": 6,
+    "status_history_id": 8,
+    "notification_id": 7,
     "attachment_id": 2,
     "display_no_counter": {
       "1": 127

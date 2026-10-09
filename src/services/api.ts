@@ -8,6 +8,14 @@ import {
   AnalyticsSummary,
   GrievanceAiSummary,
 } from '../types';
+import {
+  cacheGrievances,
+  getCachedGrievances,
+  getCachedGrievanceByPublicId,
+  cacheNotifications,
+  getCachedNotifications,
+  clearAllLocalCache,
+} from './indexedDB';
 
 const TOKEN_KEY = 'campusfix_auth_token';
 
@@ -99,6 +107,7 @@ export const api = {
 
   logout(): void {
     removeStoredToken();
+    clearAllLocalCache().catch(() => {});
   },
 
   // Metadata
@@ -152,7 +161,7 @@ export const api = {
     category?: string;
     department?: string;
     q?: string;
-  } = {}): Promise<{ total: number; limit: number; offset: number; items: Grievance[] }> {
+  } = {}): Promise<{ total: number; limit: number; offset: number; items: Grievance[]; fromCache?: boolean }> {
     const searchParams = new URLSearchParams();
     if (params.limit) searchParams.set('limit', params.limit.toString());
     if (params.offset !== undefined) searchParams.set('offset', params.offset.toString());
@@ -164,11 +173,57 @@ export const api = {
     if (params.q) searchParams.set('q', params.q);
 
     const qs = searchParams.toString();
-    return request<{ total: number; limit: number; offset: number; items: Grievance[] }>(`/api/grievances${qs ? `?${qs}` : ''}`);
+    try {
+      const res = await request<{ total: number; limit: number; offset: number; items: Grievance[] }>(`/api/grievances${qs ? `?${qs}` : ''}`);
+      if (res && res.items) {
+        cacheGrievances(res.items).catch(() => {});
+      }
+      return res;
+    } catch (networkErr) {
+      // Offline fallback: load from IndexedDB local storage
+      const cached = await getCachedGrievances();
+      if (cached && cached.length > 0) {
+        let filtered = cached;
+        if (params.status && params.status !== 'all') {
+          filtered = filtered.filter(g => g.status === params.status);
+        }
+        if (params.priority && params.priority !== 'all') {
+          filtered = filtered.filter(g => g.priority === params.priority);
+        }
+        if (params.q) {
+          const qLower = params.q.toLowerCase();
+          filtered = filtered.filter(g =>
+            (g.summary || '').toLowerCase().includes(qLower) ||
+            (g.display_no || '').toLowerCase().includes(qLower) ||
+            (g.description || '').toLowerCase().includes(qLower)
+          );
+        }
+        return {
+          total: filtered.length,
+          limit: params.limit || 50,
+          offset: params.offset || 0,
+          items: filtered,
+          fromCache: true,
+        };
+      }
+      throw networkErr;
+    }
   },
 
-  async getGrievance(publicId: string): Promise<Grievance> {
-    return request<Grievance>(`/api/grievances/${publicId}`);
+  async getGrievance(publicId: string): Promise<Grievance & { fromCache?: boolean }> {
+    try {
+      const item = await request<Grievance>(`/api/grievances/${publicId}`);
+      if (item) {
+        cacheGrievances([item]).catch(() => {});
+      }
+      return item;
+    } catch (networkErr) {
+      const cached = await getCachedGrievanceByPublicId(publicId);
+      if (cached) {
+        return { ...cached, fromCache: true };
+      }
+      throw networkErr;
+    }
   },
 
   async updateStatus(publicId: string, status: string, note?: string): Promise<Grievance> {
@@ -212,7 +267,19 @@ export const api = {
 
   // Notifications
   async getNotifications(): Promise<NotificationItem[]> {
-    return request<NotificationItem[]>('/api/notifications');
+    try {
+      const list = await request<NotificationItem[]>('/api/notifications');
+      if (list) {
+        cacheNotifications(list).catch(() => {});
+      }
+      return list;
+    } catch (networkErr) {
+      const cached = await getCachedNotifications();
+      if (cached && cached.length > 0) {
+        return cached;
+      }
+      throw networkErr;
+    }
   },
 
   async markNotificationRead(id: number): Promise<{ success: boolean }> {

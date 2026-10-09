@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { CampusFixLogo } from '../components/CampusFixLogo';
 
 interface RegisterPageProps {
   onNavigateLogin: () => void;
@@ -67,11 +68,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
       {/* Brand Header */}
       <div className="flex items-center justify-between py-2">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm">
-            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-              domain
-            </span>
-          </div>
+          <CampusFixLogo size={36} />
           <div>
             <p className="text-[11px] text-secondary tracking-wide uppercase font-semibold">
               CampusFix AI

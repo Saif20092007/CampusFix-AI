@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { CampusFixLogo } from '../components/CampusFixLogo';
 
 interface SignInPageProps {
   onNavigateRegister: () => void;
@@ -13,6 +14,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showDemoModal, setShowDemoModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +43,21 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
   };
 
   return (
-    <div className="flex-1 flex flex-col justify-center items-center w-full max-w-md mx-auto py-8 px-4 animate-fade-in">
+    <div className="flex-1 flex flex-col justify-center items-center w-full max-w-md mx-auto py-8 px-4 animate-fade-in relative">
+      {/* Top Corner Demo Button */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          type="button"
+          onClick={() => setShowDemoModal(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-primary border border-primary/20 text-[12px] font-semibold transition-all shadow-md active:scale-95 cursor-pointer"
+          title="Open Demo Accounts"
+        >
+          <span className="material-symbols-outlined text-[16px]">switch_account</span>
+          <span>Demo</span>
+          <span className="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+        </button>
+      </div>
+
       {/* Top Badge */}
       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant text-[11px] font-medium mb-3 shadow-sm">
         <span className="material-symbols-outlined text-primary text-[15px]" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -51,8 +67,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
       </div>
 
       {/* Main Logo & Title */}
-      <div className="w-12 h-12 rounded-xl bg-primary-container text-on-primary flex items-center justify-center mb-2 shadow-md">
-        <span className="material-symbols-outlined text-[26px]">domain_verification</span>
+      <div className="mb-2">
+        <CampusFixLogo size={56} />
       </div>
 
       <h1 className="text-[24px] font-bold text-on-surface tracking-tight text-center">
@@ -186,109 +202,101 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
             </p>
           </div>
         </form>
+      </div>
 
-        {/* Quick Demo Login Table for NMIET Roles: Student, Officer, Grievance Cell */}
-        <div className="mt-5 pt-4 border-t border-surface-container">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] font-semibold text-secondary uppercase tracking-wider">
-              NMIET Demo Accounts
-            </p>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-container text-secondary">
-              password: campus123
-            </span>
-          </div>
+      {/* Demo Persona Modal (Student, HOD, Principal) */}
+      {showDemoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-sm rounded-2xl bg-surface-container-lowest border border-surface-container p-5 shadow-2xl text-on-surface space-y-4">
+            <div className="flex items-center justify-between border-b border-surface-container pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary-container text-on-primary flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[18px]">switch_account</span>
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-on-surface">Choose Demo Account</h3>
+                  <p className="text-[11px] text-secondary">Click any role to log in instantly</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDemoModal(false)}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-secondary hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
 
-          <div className="overflow-hidden rounded-xl border border-surface-container bg-surface-container-low text-[12px]">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-surface-container text-[10px] uppercase font-bold text-secondary border-b border-surface-container">
-                  <th className="py-1.5 px-2.5">Role</th>
-                  <th className="py-1.5 px-2.5 hidden sm:table-cell">Email</th>
-                  <th className="py-1.5 px-2">College</th>
-                  <th className="py-1.5 px-2.5">Description</th>
-                  <th className="py-1.5 px-2 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-container">
-                <tr className="hover:bg-surface-container transition-colors">
-                  <td className="py-2 px-2.5 font-bold text-on-surface whitespace-nowrap">
-                    Student
-                  </td>
-                  <td className="py-2 px-2.5 font-mono text-[11px] text-secondary hidden sm:table-cell">
-                    student@nmiet.demo
-                  </td>
-                  <td className="py-2 px-2 font-semibold text-primary">
-                    NMIET
-                  </td>
-                  <td className="py-2 px-2.5 text-on-surface-variant text-[11px]">
-                    Saif Sayyad (SY CSE, Division B, Roll 56)
-                  </td>
-                  <td className="py-2 px-2 text-right">
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => handleQuickDemo('student@nmiet.demo')}
-                      className="px-2.5 py-1 rounded-md bg-primary-container text-on-primary text-[11px] font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                    >
-                      Login
-                    </button>
-                  </td>
-                </tr>
+            <div className="flex flex-col gap-2.5">
+              {/* 1. Student */}
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => {
+                  setShowDemoModal(false);
+                  handleQuickDemo('student@nmiet.demo');
+                }}
+                className="w-full p-3 rounded-xl border border-surface-container hover:border-primary/50 bg-surface-container-low hover:bg-surface-container flex items-center gap-3 transition-all text-left cursor-pointer active:scale-98 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                  <span className="material-symbols-outlined text-[20px]">school</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] font-bold text-on-surface">Student</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-700 dark:text-blue-300">NMIET</span>
+                  </div>
+                  <p className="text-[12px] text-secondary truncate mt-0.5">Saif Sayyad · SY Computer Eng</p>
+                </div>
+              </button>
 
-                <tr className="hover:bg-surface-container transition-colors">
-                  <td className="py-2 px-2.5 font-bold text-on-surface whitespace-nowrap">
-                    Officer
-                  </td>
-                  <td className="py-2 px-2.5 font-mono text-[11px] text-secondary hidden sm:table-cell">
-                    officer@nmiet.demo
-                  </td>
-                  <td className="py-2 px-2 font-semibold text-primary">
-                    NMIET
-                  </td>
-                  <td className="py-2 px-2.5 text-on-surface-variant text-[11px]">
-                    Santosh Shinde (Electrical Maintenance)
-                  </td>
-                  <td className="py-2 px-2 text-right">
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => handleQuickDemo('officer@nmiet.demo')}
-                      className="px-2.5 py-1 rounded-md bg-primary-container text-on-primary text-[11px] font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                    >
-                      Login
-                    </button>
-                  </td>
-                </tr>
+              {/* 2. HOD */}
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => {
+                  setShowDemoModal(false);
+                  handleQuickDemo('officer@nmiet.demo');
+                }}
+                className="w-full p-3 rounded-xl border border-surface-container hover:border-primary/50 bg-surface-container-low hover:bg-surface-container flex items-center gap-3 transition-all text-left cursor-pointer active:scale-98 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                  <span className="material-symbols-outlined text-[20px]">engineering</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] font-bold text-on-surface">HOD</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">Dept Head</span>
+                  </div>
+                  <p className="text-[12px] text-secondary truncate mt-0.5">Santosh Shinde · Electrical Maintenance</p>
+                </div>
+              </button>
 
-                <tr className="hover:bg-surface-container transition-colors">
-                  <td className="py-2 px-2.5 font-bold text-on-surface whitespace-nowrap">
-                    Grievance Cell
-                  </td>
-                  <td className="py-2 px-2.5 font-mono text-[11px] text-secondary hidden sm:table-cell">
-                    cell@nmiet.demo
-                  </td>
-                  <td className="py-2 px-2 font-semibold text-primary">
-                    NMIET
-                  </td>
-                  <td className="py-2 px-2.5 text-on-surface-variant text-[11px]">
-                    Dr. Mahesh Wankhede (NMIET Grievance Cell)
-                  </td>
-                  <td className="py-2 px-2 text-right">
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => handleQuickDemo('cell@nmiet.demo')}
-                      className="px-2.5 py-1 rounded-md bg-primary-container text-on-primary text-[11px] font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                    >
-                      Login
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+              {/* 3. Principal */}
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => {
+                  setShowDemoModal(false);
+                  handleQuickDemo('cell@nmiet.demo');
+                }}
+                className="w-full p-3 rounded-xl border border-surface-container hover:border-primary/50 bg-surface-container-low hover:bg-surface-container flex items-center gap-3 transition-all text-left cursor-pointer active:scale-98 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                  <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] font-bold text-on-surface">Principal</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300">Grievance Cell</span>
+                  </div>
+                  <p className="text-[12px] text-secondary truncate mt-0.5">Dr. Mahesh Wankhede · Central Authority</p>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

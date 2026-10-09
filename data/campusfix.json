@@ -215,6 +215,48 @@
       "division": null,
       "phone": "+91 98225 55667",
       "created_at": "2024-10-01T08:00:00.000Z"
+    },
+    {
+      "id": 7,
+      "email": "test@gmail.com",
+      "password_hash": "$2b$10$grolXYxOBhk40s3FpJfHyeJ0nmf1DF5tJ7oK.4D8LrxgrBg2vqVuO",
+      "name": "Test User",
+      "role": "STUDENT",
+      "college_id": 1,
+      "department_id": null,
+      "academic_department": "Computer Engineering",
+      "year": "TE",
+      "division": "Div B",
+      "phone": "",
+      "created_at": "2026-10-09T16:10:59.977Z"
+    },
+    {
+      "id": 8,
+      "email": "aarav.patil@nmiet.edu.in",
+      "password_hash": "$2b$10$cST0HB/1FcrvI1u8PNGyC.OeRK84X/xBCXtPhE1UFFs9MP22yS4ne",
+      "name": "Aarav Patil",
+      "role": "STUDENT",
+      "college_id": 1,
+      "department_id": null,
+      "academic_department": "Computer Engineering",
+      "year": "TE",
+      "division": "Div B",
+      "phone": "",
+      "created_at": "2026-10-09T16:11:28.395Z"
+    },
+    {
+      "id": 9,
+      "email": "priya.kulkarni@nmiet.edu.in",
+      "password_hash": "$2b$10$oclkRdIkPLWSwjgt68u73OMSMaddaq/dhGBwsH9hbUkJE5qfsd6ye",
+      "name": "Priya Kulkarni",
+      "role": "STUDENT",
+      "college_id": 1,
+      "department_id": null,
+      "academic_department": "Computer Engineering",
+      "year": "TE",
+      "division": "Div A",
+      "phone": "",
+      "created_at": "2026-10-09T16:34:19.075Z"
     }
   ],
   "grievances": [
@@ -481,7 +523,7 @@
     }
   ],
   "counters": {
-    "user_id": 6,
+    "user_id": 9,
     "department_id": 8,
     "category_id": 12,
     "grievance_id": 6,

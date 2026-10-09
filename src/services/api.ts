@@ -7,6 +7,7 @@ import {
   AiAnalysisResponse,
   AnalyticsSummary,
   GrievanceAiSummary,
+  PriorityLevel,
 } from '../types';
 import {
   cacheGrievances,
@@ -145,6 +146,7 @@ export const api = {
     location: string;
     analysis_id: string;
     attachment_ids?: number[];
+    priority?: PriorityLevel;
   }): Promise<Grievance> {
     return request<Grievance>('/api/grievances', {
       method: 'POST',

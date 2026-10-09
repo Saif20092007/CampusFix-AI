@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { PhotoUploader, UploadedFileState } from '../components/PhotoUploader';
 import { VoiceRecorder } from '../components/VoiceRecorder';
 import { api } from '../services/api';
-import { AiAnalysisResponse } from '../types';
+import { AiAnalysisResponse, PriorityLevel } from '../types';
 
 interface ReportIssueStep1Props {
   initialCategory?: string;
@@ -10,7 +10,8 @@ interface ReportIssueStep1Props {
     analysis: AiAnalysisResponse,
     description: string,
     location: string,
-    photos: UploadedFileState[]
+    photos: UploadedFileState[],
+    taggedPriority?: PriorityLevel
   ) => void;
   onCancel: () => void;
 }
@@ -25,6 +26,7 @@ export const ReportIssueStep1: React.FC<ReportIssueStep1Props> = ({
   );
   const [location, setLocation] = useState('');
   const [photos, setPhotos] = useState<UploadedFileState[]>([]);
+  const [taggedPriority, setTaggedPriority] = useState<PriorityLevel>('Medium');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -85,7 +87,7 @@ export const ReportIssueStep1: React.FC<ReportIssueStep1Props> = ({
 
     try {
       const analysis = await api.analyzeGrievance(description, location);
-      onAnalysisComplete(analysis, description, location, photos);
+      onAnalysisComplete(analysis, description, location, photos, taggedPriority);
     } catch (err: any) {
       setErrorMsg(err.message || 'AI analysis is temporarily unavailable.');
     } finally {
@@ -259,6 +261,66 @@ export const ReportIssueStep1: React.FC<ReportIssueStep1Props> = ({
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Priority Level Tagging */}
+        <div className="flex flex-col gap-1.5 pt-1">
+          <label className="text-[12px] font-semibold text-on-surface-variant flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px] text-primary">label_important</span>
+              Tag Grievance Priority Level
+            </span>
+            <span className="text-[11px] text-secondary font-normal">Choose urgency</span>
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              {
+                level: 'Low' as PriorityLevel,
+                label: 'Low',
+                desc: 'Aesthetic / minor',
+                sla: '7 days',
+                icon: 'low_priority',
+                activeClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-400 dark:border-slate-500 ring-2 ring-slate-400 shadow-xs',
+              },
+              {
+                level: 'Medium' as PriorityLevel,
+                label: 'Medium',
+                desc: 'Standard repairs',
+                sla: '3 days',
+                icon: 'swap_vert',
+                activeClass: 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border-amber-400 ring-2 ring-amber-400 shadow-xs',
+              },
+              {
+                level: 'High' as PriorityLevel,
+                label: 'High',
+                desc: 'Urgent repairs',
+                sla: '48 hrs',
+                icon: 'bolt',
+                activeClass: 'bg-orange-50 dark:bg-orange-950/40 text-orange-900 dark:text-orange-200 border-orange-400 ring-2 ring-orange-400 shadow-xs',
+              },
+            ].map((p) => {
+              const isSelected = taggedPriority === p.level;
+              return (
+                <button
+                  key={p.level}
+                  type="button"
+                  onClick={() => setTaggedPriority(p.level)}
+                  className={`p-2.5 rounded-xl border flex flex-col items-center text-center transition-all cursor-pointer ${
+                    isSelected
+                      ? p.activeClass
+                      : 'bg-surface-container-lowest border-surface-container-high hover:bg-surface-container text-on-surface'
+                  }`}
+                >
+                  <div className="flex items-center gap-1 font-semibold text-[13px]">
+                    <span className="material-symbols-outlined text-[16px]">{p.icon}</span>
+                    <span>{p.label}</span>
+                  </div>
+                  <span className="text-[10px] text-secondary mt-0.5">{p.desc}</span>
+                  <span className="text-[10px] font-mono text-secondary font-medium mt-0.5">SLA: {p.sla}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

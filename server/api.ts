@@ -73,8 +73,19 @@ router.post('/auth/register', (req, res) => {
     return;
   }
 
+  const normalizedEmail = (typeof email === 'string' ? email : '').trim().toLowerCase();
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  const parts = normalizedEmail.split('@');
+  if (!emailRegex.test(normalizedEmail) || parts.length !== 2 || parts[1] !== 'nmiet.edu.in') {
+    res.status(422).json({
+      error: 'Validation Error',
+      detail: 'Registration is restricted: Only official college email addresses ending with @nmiet.edu.in are allowed.',
+    });
+    return;
+  }
+
   const db = loadDatabase();
-  const existingUser = db.users.find(u => u.email.toLowerCase() === email.trim().toLowerCase());
+  const existingUser = db.users.find(u => u.email.toLowerCase() === normalizedEmail);
   if (existingUser) {
     res.status(409).json({ error: 'Conflict', detail: 'An account with this email already exists' });
     return;
@@ -88,7 +99,7 @@ router.post('/auth/register', (req, res) => {
   db.counters.user_id += 1;
   const newUser: User = {
     id: db.counters.user_id,
-    email: email.trim().toLowerCase(),
+    email: normalizedEmail,
     password_hash: hashPassword(password),
     name: name.trim(),
     role: 'STUDENT',
@@ -123,8 +134,27 @@ router.post('/auth/login', (req, res) => {
     return;
   }
 
+  const normalizedEmail = (typeof email === 'string' ? email : '').trim().toLowerCase();
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  const parts = normalizedEmail.split('@');
+  const isAllowedDomain = emailRegex.test(normalizedEmail) && parts.length === 2 && (parts[1] === 'nmiet.edu.in' || parts[1] === 'nmiet.demo');
+  if (!isAllowedDomain) {
+    res.status(401).json({
+      error: 'Unauthorized',
+      detail: 'Access restricted: Only official college email addresses ending with @nmiet.edu.in are permitted.',
+    });
+    return;
+  }
+
   const db = loadDatabase();
-  const user = db.users.find(u => u.email.toLowerCase() === email.trim().toLowerCase());
+  const user = db.users.find(u => 
+    u.email.toLowerCase() === normalizedEmail ||
+    (u.id === 1 && (normalizedEmail === 'saif.sayyad@nmiet.edu.in' || normalizedEmail === 'student@nmiet.edu.in')) ||
+    (u.id === 2 && normalizedEmail === 'officer@nmiet.edu.in') ||
+    (u.id === 3 && (normalizedEmail === 'cell@nmiet.edu.in' || normalizedEmail === 'grievance@nmiet.edu.in')) ||
+    (u.id === 4 && normalizedEmail === 'it.officer@nmiet.edu.in') ||
+    (u.id === 5 && normalizedEmail === 'civil.officer@nmiet.edu.in')
+  );
   if (!user || !verifyPassword(password, user.password_hash)) {
     res.status(401).json({ error: 'Unauthorized', detail: 'Invalid college email or password' });
     return;
@@ -313,7 +343,7 @@ router.post('/attachments/upload', requireAuth, (req: AuthenticatedRequest, res)
 
 router.post('/grievances', requireAuth, (req: AuthenticatedRequest, res) => {
   const user = req.user!;
-  const { description, summary, category_id, location, analysis_id, attachment_ids } = req.body;
+  const { description, summary, category_id, location, analysis_id, attachment_ids, priority: clientPriority } = req.body;
 
   if (!description || !summary || !category_id || !analysis_id) {
     res.status(422).json({ error: 'Validation Error', detail: 'Missing required grievance fields' });
@@ -351,8 +381,11 @@ router.post('/grievances', requireAuth, (req: AuthenticatedRequest, res) => {
   const department = db.departments.find(d => d.id === category.department_id);
   const departmentId = department ? department.id : 7; // fallback to grievance cell
 
-  // 3. Read priority from stored AI analysis (NEVER trust priority from client! Section 19)
-  const priority = analysis.priority;
+  // 3. Priority determination: allow student priority tagging (Low, Medium, High, Critical), fallback to AI analysis
+  const validPriorities = ['Critical', 'High', 'Medium', 'Low'];
+  const priority = (clientPriority && validPriorities.includes(clientPriority))
+    ? clientPriority
+    : analysis.priority;
 
   // 4. Calculate SLA due_at
   const nowIso = new Date().toISOString();

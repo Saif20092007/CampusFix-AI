@@ -18,7 +18,7 @@ import { GrievanceCellTicketDetail } from './pages/GrievanceCellTicketDetail';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { api } from './services/api';
-import { AiAnalysisResponse, Grievance, NotificationItem } from './types';
+import { AiAnalysisResponse, Grievance, NotificationItem, PriorityLevel } from './types';
 import { UploadedFileState } from './components/PhotoUploader';
 import { useBackgroundGrievanceWatcher } from './hooks/useBackgroundGrievanceWatcher';
 
@@ -36,6 +36,7 @@ function MainApp() {
   const [reportedDescription, setReportedDescription] = useState('');
   const [reportedLocation, setReportedLocation] = useState('');
   const [reportedPhotos, setReportedPhotos] = useState<UploadedFileState[]>([]);
+  const [reportedPriority, setReportedPriority] = useState<PriorityLevel | undefined>();
   const [createdGrievance, setCreatedGrievance] = useState<Grievance | null>(null);
 
   // Detail view state
@@ -174,11 +175,12 @@ function MainApp() {
               reportStep === 1 ? (
                 <ReportIssueStep1
                   initialCategory={prefilledCategory}
-                  onAnalysisComplete={(analysis, desc, loc, photos) => {
+                  onAnalysisComplete={(analysis, desc, loc, photos, taggedPriority) => {
                     setCurrentAnalysis(analysis);
                     setReportedDescription(desc);
                     setReportedLocation(loc);
                     setReportedPhotos(photos);
+                    setReportedPriority(taggedPriority);
                     setReportStep(2);
                   }}
                   onCancel={handleReturnHome}
@@ -189,6 +191,7 @@ function MainApp() {
                   originalDescription={reportedDescription}
                   originalLocation={reportedLocation}
                   photos={reportedPhotos}
+                  initialPriority={reportedPriority}
                   onSubmissionSuccess={(created) => {
                     setCreatedGrievance(created);
                     setReportStep(3);

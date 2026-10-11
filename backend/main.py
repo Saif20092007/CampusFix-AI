@@ -39,6 +39,15 @@ app.include_router(attachments.router)
 app.include_router(notifications.router)
 app.include_router(analytics.router)
 
+@app.get("/")
+def root():
+    return {
+        "service": "CampusFix AI API",
+        "status": "online",
+        "docs_url": "/docs",
+        "health_url": "/health"
+    }
+
 @app.get("/health")
 @app.get("/api/health")
 def healthcheck():

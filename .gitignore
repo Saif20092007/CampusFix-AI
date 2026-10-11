@@ -8,7 +8,6 @@ coverage/
 !.env.example
 
 # Python & SQLite artifacts
-.venv/
 __pycache__/
 *.pyc
 *.pyo

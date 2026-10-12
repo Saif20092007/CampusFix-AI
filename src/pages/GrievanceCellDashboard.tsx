@@ -5,6 +5,7 @@ import { Grievance, Department } from '../types';
 import { StatusChip } from '../components/StatusChip';
 import { PriorityChip } from '../components/PriorityChip';
 import { SlaBadge } from '../components/SlaBadge';
+import { exportGrievancesToCsv, exportGrievancesToListPdf } from '../utils/exportUtils';
 
 interface GrievanceCellDashboardProps {
   onSelectGrievance: (publicId: string) => void;
@@ -87,6 +88,18 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
   };
 
   const [exportToast, setExportToast] = useState<string | null>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const getFilterSummary = () => {
+    const parts: string[] = [];
+    if (activeTab !== 'all') parts.push(`Tab: ${activeTab.toUpperCase()}`);
+    if (deptFilter !== 'all') parts.push(`Dept: ${deptFilter}`);
+    if (priorityFilter !== 'all') parts.push(`Priority: ${priorityFilter}`);
+    if (statusFilter !== 'all') parts.push(`Status: ${statusFilter}`);
+    if (slaFilter !== 'all') parts.push(`SLA: ${slaFilter}`);
+    if (searchQ) parts.push(`Search: "${searchQ}"`);
+    return parts.length > 0 ? parts.join(' | ') : 'All Grievances';
+  };
 
   const handleExportCsv = (selectedOnly: boolean = false) => {
     const targetList =
@@ -99,77 +112,45 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
       return;
     }
 
-    const headers = [
-      'Ticket Number',
-      'Summary',
-      'Description',
-      'Category',
-      'Department',
-      'Assigned Technician',
-      'Priority',
-      'Status',
-      'Location',
-      'Student Name',
-      'Academic Department',
-      'Year',
-      'Division',
-      'SLA Status',
-      'SLA Time Remaining',
-      'Due Date',
-      'Resolution Note',
-      'Created Date',
-      'Resolved Date',
-    ];
+    try {
+      const { count, filename } = exportGrievancesToCsv({
+        grievances: targetList,
+        filenamePrefix: selectedOnly ? 'CampusFix_Selected_Grievances' : 'CampusFix_Master_Register',
+        userRole: user?.role || 'GRIEVANCE_CELL',
+      });
+      setExportToast(`Exported ${count} ${count === 1 ? 'grievance' : 'grievances'} to ${filename}`);
+      setTimeout(() => setExportToast(null), 4000);
+    } catch (err: any) {
+      alert(err.message || 'CSV export failed');
+    }
+  };
 
-    const escapeCsvCell = (val: any): string => {
-      if (val === null || val === undefined) return '""';
-      const str = String(val).replace(/\r\n/g, ' ').replace(/\n/g, ' ').replace(/\r/g, ' ');
-      return `"${str.replace(/"/g, '""')}"`;
-    };
+  const handleExportPdf = (selectedOnly: boolean = false) => {
+    const targetList =
+      selectedOnly && selectedIds.length > 0
+        ? grievances.filter((g) => selectedIds.includes(g.public_id))
+        : grievances;
 
-    const rows = targetList.map((g) => [
-      escapeCsvCell(g.display_no),
-      escapeCsvCell(g.summary),
-      escapeCsvCell(g.description),
-      escapeCsvCell(g.category_name || 'General'),
-      escapeCsvCell(g.department_name || 'Central Administration'),
-      escapeCsvCell(g.assigned_to_name || 'Unassigned'),
-      escapeCsvCell(g.priority),
-      escapeCsvCell(g.status),
-      escapeCsvCell(g.location || 'Campus Premise'),
-      escapeCsvCell(g.student_name || g.student?.full_name || 'Student'),
-      escapeCsvCell(g.student_academic_dept || g.student?.academic_department || ''),
-      escapeCsvCell(g.student_year || g.student?.year || ''),
-      escapeCsvCell(g.student_division || g.student?.division || ''),
-      escapeCsvCell(g.sla?.status || ''),
-      escapeCsvCell(g.sla?.label || `${g.sla?.hours_remaining ?? 0}h remaining`),
-      escapeCsvCell(g.due_at ? new Date(g.due_at).toLocaleString('en-IN') : ''),
-      escapeCsvCell(g.resolution_note || ''),
-      escapeCsvCell(g.created_at ? new Date(g.created_at).toLocaleString('en-IN') : ''),
-      escapeCsvCell(g.resolved_at ? new Date(g.resolved_at).toLocaleString('en-IN') : ''),
-    ]);
+    if (targetList.length === 0) {
+      alert('No grievances available in the current view to export.');
+      return;
+    }
 
-    const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\r\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-
-    const dateStr = new Date().toISOString().split('T')[0];
-    const filename = selectedOnly
-      ? `CampusFix_Selected_Grievances_${dateStr}.csv`
-      : `CampusFix_Grievances_Report_${dateStr}.csv`;
-
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    setExportToast(`Exported ${targetList.length} ${targetList.length === 1 ? 'grievance' : 'grievances'} to ${filename}`);
-    setTimeout(() => {
-      setExportToast(null);
-    }, 4500);
+    setIsExportingPdf(true);
+    try {
+      const { count, filename } = exportGrievancesToListPdf({
+        grievances: targetList,
+        user,
+        filterSummary: selectedOnly ? `Selected Tickets (${targetList.length} items)` : getFilterSummary(),
+        title: selectedOnly ? 'Selected Grievances Extract' : 'Master Grievance Register & Status Report',
+      });
+      setExportToast(`Generated PDF Register (${count} records): ${filename}`);
+      setTimeout(() => setExportToast(null), 4000);
+    } catch (err: any) {
+      alert(err.message || 'PDF export failed');
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   const handlePushAnnouncement = () => {
@@ -356,10 +337,21 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
               type="button"
               onClick={() => handleExportCsv(false)}
               className="h-10 px-3.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-1.5 text-[13px] font-medium shadow-xs transition-colors cursor-pointer"
-              title="Export all displayed grievances to a CSV file"
+              title="Export all displayed grievances to a CSV spreadsheet"
             >
               <span className="material-symbols-outlined text-[16px] text-primary">file_download</span>
               <span>Export CSV</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleExportPdf(false)}
+              disabled={isExportingPdf}
+              className="h-10 px-3.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-1.5 text-[13px] font-medium shadow-xs transition-colors cursor-pointer disabled:opacity-60"
+              title="Export formatted Grievance Register as PDF report"
+            >
+              <span className="material-symbols-outlined text-[16px] text-rose-600">picture_as_pdf</span>
+              <span>{isExportingPdf ? 'Generating...' : 'Export PDF'}</span>
             </button>
 
             <button
@@ -568,7 +560,17 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
                       title="Export only selected grievances to CSV"
                     >
                       <span className="material-symbols-outlined text-[15px]">file_download</span>
-                      <span>Export Selected ({selectedIds.length})</span>
+                      <span>Export CSV ({selectedIds.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExportPdf(true)}
+                      disabled={isExportingPdf}
+                      className="px-2.5 py-1 rounded-lg bg-surface text-rose-600 text-[12px] font-semibold border border-rose-300 hover:bg-rose-50 flex items-center gap-1 shadow-xs cursor-pointer transition-colors disabled:opacity-60"
+                      title="Export selected grievances as PDF extract"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">picture_as_pdf</span>
+                      <span>Export PDF ({selectedIds.length})</span>
                     </button>
                     <button
                       type="button"
@@ -686,7 +688,13 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
                                 {g.student_year ? `${g.student_year} ` : ''}{g.student_academic_dept || 'Engg'}
                               </span>
                               {g.student_phone && (
-                                <span className="text-[10px] text-secondary font-mono">{g.student_phone}</span>
+                                <a
+                                  href={`tel:${g.student_phone.replace(/[\s-]/g, '')}`}
+                                  className="text-[10px] text-secondary hover:text-primary hover:underline font-mono"
+                                  title="Call student"
+                                >
+                                  {g.student_phone}
+                                </a>
                               )}
                             </div>
                           </td>
@@ -886,7 +894,7 @@ export const GrievanceCellDashboard: React.FC<GrievanceCellDashboardProps> = ({
                 type="text"
                 value={targetTechName}
                 onChange={(e) => setTargetTechName(e.target.value)}
-                placeholder="e.g. Santosh Shinde"
+                placeholder="e.g. Anand Jadhav"
                 className="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface text-[13px] border border-surface-container"
               />
             </div>

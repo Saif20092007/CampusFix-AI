@@ -6,6 +6,7 @@ import { StatusChip } from '../components/StatusChip';
 import { PriorityChip } from '../components/PriorityChip';
 import { SlaBadge } from '../components/SlaBadge';
 import { PhotoModal } from '../components/PhotoModal';
+import { exportSingleGrievancePdf } from '../utils/exportUtils';
 
 interface OfficerTicketDetailProps {
   publicId: string;
@@ -20,6 +21,7 @@ export const OfficerTicketDetail: React.FC<OfficerTicketDetailProps> = ({
   const [grievance, setGrievance] = useState<Grievance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // Modals
   const [showResolveModal, setShowResolveModal] = useState(false);
@@ -53,6 +55,18 @@ export const OfficerTicketDetail: React.FC<OfficerTicketDetailProps> = ({
   useEffect(() => {
     fetchDetail();
   }, [publicId]);
+
+  const handleExportPdf = () => {
+    if (!grievance) return;
+    setIsExportingPdf(true);
+    try {
+      exportSingleGrievancePdf({ grievance, user });
+    } catch (err: any) {
+      alert(err.message || 'Failed to export case dossier');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
 
   const handleAddInternalNote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,9 +179,27 @@ export const OfficerTicketDetail: React.FC<OfficerTicketDetailProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[11px] px-2.5 py-1 rounded-full bg-surface-container text-secondary flex items-center gap-1 border border-surface-container">
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            disabled={isExportingPdf}
+            className="h-8 px-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center gap-1.5 text-[12px] font-medium shadow-xs transition-colors cursor-pointer disabled:opacity-60"
+            title="Download departmental Case Dossier as PDF"
+          >
+            <span className="material-symbols-outlined text-[15px] text-rose-600">picture_as_pdf</span>
+            <span>{isExportingPdf ? 'Exporting...' : 'Export Case PDF'}</span>
+          </button>
+          <span className="text-[11px] px-2.5 py-1 rounded-full bg-surface-container text-secondary flex items-center gap-1 border border-surface-container hidden sm:inline-flex">
             <span>Officer View: <strong>{user?.name}</strong></span>
           </span>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="w-8 h-8 rounded-lg bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-secondary transition-colors"
+            title="Print view"
+          >
+            <span className="material-symbols-outlined text-[16px]">print</span>
+          </button>
         </div>
       </div>
 
@@ -263,7 +295,7 @@ export const OfficerTicketDetail: React.FC<OfficerTicketDetailProps> = ({
               <div className="p-4 rounded-xl bg-surface-container flex flex-col gap-2.5 border border-surface-container-high">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-[12px]">
-                    {(grievance.student?.first_name || grievance.student_name || 'Saif Sayyad')
+                    {(grievance.student?.first_name || grievance.student_name || 'Mahesh Patil')
                       .split(' ')
                       .map((n) => n[0])
                       .join('')

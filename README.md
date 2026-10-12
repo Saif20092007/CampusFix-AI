@@ -2,13 +2,14 @@
   <img src="public/campusfix-logo.png" alt="CampusFix AI Logo" width="120" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);" />
   <h1>CampusFix AI</h1>
   <p><strong>"Report. Track. Resolve."</strong></p>
-  <p>AI-Powered College Grievance Management Platform with Gemini AI Auto-Triage, SLA Tracking, and Multi-Role Dispatch</p>
+  <p>AI-Powered College Grievance Management Platform with Gemini AI Auto-Triage, SLA Tracking, Multi-Role Dispatch, and Client-Side CSV/PDF Reporting</p>
 
   <p>
     <img src="https://img.shields.io/badge/Frontend-React_19_+_Vite_8_+_TypeScript-61DAFB?logo=react&logoColor=white" alt="React 19" />
     <img src="https://img.shields.io/badge/Backend-FastAPI_+_Python_3.12-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
     <img src="https://img.shields.io/badge/Database-SQLite_+_SQLAlchemy-003B57?logo=sqlite&logoColor=white" alt="SQLite" />
     <img src="https://img.shields.io/badge/AI_Engine-Google_Gemini-4285F4?logo=google&logoColor=white" alt="Gemini" />
+    <img src="https://img.shields.io/badge/Export_Engine-RFC--4180_CSV_+_jsPDF-F43F5E?logo=adobeacrobatreader&logoColor=white" alt="CSV & PDF Export" />
     <img src="https://img.shields.io/badge/Tests-27%2F27_Passed-success?logo=pytest&logoColor=white" alt="Pytest Tests" />
   </p>
 </div>
@@ -17,52 +18,56 @@
 
 ## 🏛️ Overview
 
-**CampusFix AI** is a modern, full-stack college grievance management system designed for **Nutan Maharashtra Institute of Engineering & Technology (NMIET)** and affiliated institutions. 
+**CampusFix AI** is a modern, full-stack college grievance management system architected for **Nutan Maharashtra Institute of Engineering & Technology (NMIET)** and affiliated institutions. 
 
-It empowers students to submit facilities, infrastructural, hardware, and sanitation issues in plain, natural language. **Google Gemini AI** automatically triages every complaint—classifying the department, assessing severity priority, generating a title summary, pinpointing the location, and extracting searchable keywords—with offline deterministic keyword fallback.
+It empowers students to submit facilities, infrastructural, hardware, and sanitation issues in plain, natural language. **Google Gemini AI** automatically triages every complaint—classifying the service department, assigning severity priority, generating a title summary, pinpointing the location hint, and extracting searchable keywords—with offline deterministic keyword fallback.
 
-Department Officers and the central Grievance Cell oversee tickets via role-scoped dashboards backed by automated SLA countdown timers, audit history logging, and real-time compliance analytics.
+Department Officers (HODs) and the central Grievance Cell oversee tickets via role-scoped dashboards backed by automated SLA countdown timers, audit history logging, real-time compliance analytics, and institutional **CSV and vector PDF reporting**.
 
 ---
 
-## 🌟 Key Features & Recent Enhancements
+## 🌟 Key Features & Architectural Capabilities
 
-### 🎨 1. Brand Identity & UI Refresh
-- **Official CampusFix AI Logo**: Integrated brand icon across the PWA manifest, header navigation, and login screen.
-- **Top-Left 1-Click Demo Login**: Dedicated floating menu button in the top-left corner enabling instant role switching between:
-  - 🎓 **Student** (`Saif Sayyad` · `student@nmiet.demo`)
-  - 🛠️ **Grievance Officer** (`Santosh Shinde` · `officer@nmiet.demo`)
-  - 🏛️ **HOD / Grievance Cell** (`Dr. Mahesh Wankhede` · `cell@nmiet.demo`)
-- **Clean Auth Experience**: Removed cluttered bottom demo cards and eliminated external Firebase/Google authentication dependencies.
+### 📊 1. Institutional CSV & Vector PDF Export Engine (`src/utils/exportUtils.ts`)
+Built specifically for Grievance Cell administrators and Department Officers (HODs):
+- **RFC-4180 CSV Spreadsheet Export**: Generates Excel-friendly UTF-8 BOM CSV files with built-in **CSV Injection Defense** (CWE-1236 formula sanitization for `=`, `+`, `-`, `@`).
+- **Filtered Queue PDF Summary (Landscape A4)**: Generates high-resolution, vector-drawn PDF reports containing institutional header branding, active filter metadata, KPI status tallies, and clean grievance breakdown tables with automatic multi-page numbering.
+- **Single Ticket Audit Dossier (Portrait A4)**: Generates a complete, formal case file including tracking badges, metadata grid, student details (with strict privacy filtering), AI diagnosis synopsis, resolution outcomes, and complete chronological audit history.
+- **Role Isolation & Export Control**: Export controls are restricted strictly to **HODs** and **Grievance Cell In-charges**; students cannot export institutional data, and submitter emails are never exposed.
 
-### 🔒 2. Strict `@nmiet.edu.in` Domain Security
-- **Domain Gatekeeping**: Both frontend form validation and the FastAPI backend enforce `@nmiet.edu.in` domain restriction on `/api/auth/login` and `/api/auth/register`.
-- Unauthorized third-party domains (e.g. `@gmail.com`) are rejected with clear instructional guidance.
-- Pre-seeded `.demo` accounts remain accessible for evaluation and automated test execution.
+### 🎨 2. Brand Identity & UI Design
+- **Official CampusFix AI Logo**: Integrated brand icon across the PWA manifest, navigation header, and login screen.
+- **Distraction-Free Layout**: Clean single-page application experience with responsive header and mobile bottom navigation (no redundant footers).
+- **Top-Left 1-Click Demo Login (`TopLeftDemoButton.tsx`)**: Floating menu enabling instant role switching between:
+  - 🎓 **Student**: `Mahesh Patil` (`student@nmiet.demo`)
+  - 🛠️ **HOD / Department Officer**: `Anand Jadhav` (`officer@nmiet.demo`)
+  - 🏛️ **Grievance Cell In-charge**: `Sagar Gaikwad` (`cell@nmiet.demo`)
+- **Quick Demo Switcher in Header**: Desktop navbar dropdown for quick demo account switching.
 
-### 📝 3. Revamped Student Registration
-- **Full Name Input**: Clean placeholder (`e.g. Your Name`).
-- **Profile Completion Bar Removed**: Streamlined registration layout without distracting progress indicators.
+### 🔒 3. Domain Security & Pre-Seeded Demo Accounts
+- **Official Student Domain Policy**: Form validation and the FastAPI backend enforce `@nmiet.edu.in` domain restriction on `/api/auth/login` and `/api/auth/register`.
+- **Pre-Seeded Sandbox Accounts (`@nmiet.demo`)**:
+  - Why `@nmiet.demo` is used: Provides a sandboxed test environment representing NMIET without colliding with real faculty or student `@nmiet.edu.in` email addresses, and prevents test alerts from sending out to real external inboxes.
+
+### 📝 4. Academic Stream & Dynamic Division Registration
+- **Full Name Input**: Clean placeholder input (`e.g. Your Name`).
 - **Academic Year Dropdown**:
-  - Initial state: `Select Year`
   - Options: `FE`, `SE`, `TE`, `BE`, `BCA`, `MCA`, `M.Tech`, `B.Voc`
 - **Academic Department / Stream Dropdown**:
-  - Initial state: `Select Department`
   - Options: `Computer Engineering`, `Computer Science & Engineering`, `E&TC`, `Mechanical Engineering`, `Information Technology`, `AI & DS`, `CSE (AI)`, `Electronics & Computer Engineering`
-- **Dynamic Division Dropdown**:
-  - Adapts in real time to the selected academic year:
-    - **`FE` (First Year)**: **16 divisions** (`Div A` to `Div P`)
-    - **`SE`, `TE`, `BE`**: **3 divisions** (`Div A`, `Div B`, `Div C`)
-    - **`BCA`, `MCA`, `M.Tech`, `B.Voc`**: **1 division** (`Div A`)
-  - Automatically resets if the year is changed to prevent invalid student enrollment data.
+- **Dynamic Division Adaptation**:
+  - **`FE` (First Year)**: **16 divisions** (`Div A` to `Div P`)
+  - **`SE`, `TE`, `BE`**: **3 divisions** (`Div A`, `Div B`, `Div C`)
+  - **`BCA`, `MCA`, `M.Tech`, `B.Voc`**: **1 division** (`Div A`)
+  - Automatically resets when switching academic years to prevent invalid combinations.
 
-### 🤖 4. AI Complaint Auto-Triage & Offline Fallback
+### 🤖 5. AI Complaint Auto-Triage & Offline Fallback
 - Analyzes unstructured complaint descriptions using Google Gemini (`gemini-1.5-flash` / `gemini-3.8-flash`).
 - Automatically extracts category, priority, concise summary, location hint, and search keywords.
 - Built-in deterministic keyword classifier triggers whenever the Gemini API is unreachable or rate-limited.
 - Students inspect AI suggestions in Step 2 before submitting.
 
-### ⏱️ 5. Dynamic SLA Deadline Engine
+### ⏱️ 6. Dynamic SLA Deadline Engine
 - Turnaround limits calculated based on severity:
   - **Critical**: 24 Hours
   - **High**: 48 Hours
@@ -70,9 +75,9 @@ Department Officers and the central Grievance Cell oversee tickets via role-scop
   - **Low**: 168 Hours (7 Days)
 - Live countdown pills indicate `ON_TIME`, `DUE_SOON` (< 12h remaining), and `OVERDUE` states.
 
-### 🛡️ 6. Strict Multi-College Tenant Isolation & Privacy
-- Every query is centrally scoped by the authenticated user's `college_id`.
-- **Student Privacy**: Students never see staff internal remarks or private escalation reasons. Staff never see student emails.
+### 🛡️ 7. Strict Multi-College Tenant Isolation & Privacy
+- Every query is centrally scoped by the authenticated user's `college_id` derived from JWT authentication.
+- **Student Privacy**: Students never see staff internal remarks (`INTERNAL_REMARK`) or private escalation reasons. Staff never see student email addresses.
 - Out-of-scope ticket requests return **HTTP 404 Not Found**.
 
 ---
@@ -81,10 +86,11 @@ Department Officers and the central Grievance Cell oversee tickets via role-scop
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React 19, TypeScript, Vite 8, Tailwind CSS v4, Lucide React, Recharts |
+| **Frontend** | React 19, TypeScript, Vite 8, Tailwind CSS v4, Lucide React, Recharts, jsPDF |
 | **Backend API** | FastAPI (Python 3.12), Pydantic v2, SQLAlchemy 2.0, Uvicorn, Passlib (bcrypt), python-jose |
 | **Database** | SQLite with SQLAlchemy ORM relational models |
 | **AI Integration** | Google GenAI SDK (`google-genai`) + Deterministic RegEx/Keyword Fallback |
+| **Reporting** | Client-side RFC-4180 CSV Export + jsPDF Vector Document Generator |
 | **Testing** | Pytest, Pytest-Asyncio, HTTPX TestClient (27 automated compliance tests) |
 | **Gateway** | Express 4 + TSX server with Vite proxy integration |
 
@@ -123,7 +129,7 @@ Department Officers and the central Grievance Cell oversee tickets via role-scop
 │   ├── components/
 │   │   ├── TopLeftDemoButton.tsx# 1-Click floating demo account switcher
 │   │   ├── CampusFixLogo.tsx    # Branded SVG/PNG logo component
-│   │   ├── Header.tsx           # Top navigation bar
+│   │   ├── Header.tsx           # Top navigation bar with quick demo switcher
 │   │   ├── BottomNav.tsx        # Mobile tab navigation
 │   │   └── ...                  # Badges, chips, modal viewers
 │   ├── pages/
@@ -132,17 +138,21 @@ Department Officers and the central Grievance Cell oversee tickets via role-scop
 │   │   ├── StudentHome.tsx      # Student ticket feed
 │   │   ├── ReportIssueStep1.tsx # Natural language description & photo evidence
 │   │   ├── ReportIssueStep2.tsx # AI draft review & priority confirmation
-│   │   ├── OfficerDashboard.tsx # Department technician task queue
-│   │   ├── GrievanceCellDashboard.tsx # Triage & dispatch command console
+│   │   ├── OfficerDashboard.tsx # Department HOD task queue with CSV & PDF export
+│   │   ├── OfficerTicketDetail.tsx # Department ticket detail with PDF Dossier export
+│   │   ├── GrievanceCellDashboard.tsx # Central command console with CSV & PDF queue export
+│   │   ├── GrievanceCellTicketDetail.tsx # College ticket detail with PDF Dossier export
 │   │   └── AnalyticsPage.tsx    # Recharts compliance dashboard
+│   ├── utils/
+│   │   └── exportUtils.ts       # Client-side RFC-4180 CSV and jsPDF generator
 │   ├── services/
 │   │   └── api.ts               # Axios/Fetch client connecting to /api
-│   └── context/
-│       └── AuthContext.tsx      # Global auth & theme state
-├── pytest.ini                   # Pytest configuration with pythonpath
-├── server.ts                    # Full-stack dev gateway (port 3000)
-├── vite.config.ts               # Vite configuration with API proxy to FastAPI (port 8000)
-└── package.json                 # Node dependencies & build scripts
+│   ├── context/
+│   │   └── AuthContext.tsx      # Global auth & theme state
+│   ├── pytest.ini               # Pytest configuration with pythonpath
+│   ├── server.ts                # Full-stack dev gateway (port 3000)
+│   ├── vite.config.ts           # Vite configuration with API proxy to FastAPI (port 8000)
+│   └── package.json             # Node dependencies & build scripts
 ```
 
 ---
@@ -217,7 +227,7 @@ pytest
 ```
 *or via the virtual environment:*
 ```bash
-.\.venv\Scripts\python.exe -m pytest
+python -m pytest backend/tests
 ```
 
 ### ✅ Test Results (27 / 27 Passed)
@@ -234,11 +244,11 @@ pytest
 
 You can use the **Top-Left Demo Button** in the UI to log in with a single click, or enter credentials manually:
 
-| Role | Email | Password | Details |
+| Role | Email | Password | Persona Details |
 |---|---|---|---|
-| **Student** | `student@nmiet.demo` | `campus123` | Saif Sayyad · SY CSE · Div B |
-| **Grievance Officer** | `officer@nmiet.demo` | `campus123` | Santosh Shinde · Electrical Maintenance |
-| **HOD / Grievance Cell** | `cell@nmiet.demo` | `campus123` | Dr. Mahesh Wankhede · Grievance Cell Central |
+| **Student** | `student@nmiet.demo` | `campus123` | Mahesh Patil · SY CSE · Div B |
+| **Grievance Officer (HOD)** | `officer@nmiet.demo` | `campus123` | Anand Jadhav · Electrical Maintenance |
+| **Grievance Cell In-charge** | `cell@nmiet.demo` | `campus123` | Sagar Gaikwad · Grievance Cell Central |
 
 *(All new student self-registrations require an official `@nmiet.edu.in` email address).*
 

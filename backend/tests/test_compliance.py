@@ -80,14 +80,14 @@ def setup_database():
     # 5. Users
     from app.auth import hash_password
     pwd = hash_password("campus123")
-    saif = User(id=1, email="student@nmiet.demo", password_hash=pwd, name="Saif Patil", role="STUDENT", college_id=1, academic_department="Computer Engineering", year="TE", division="Div B", phone="9876543210")
-    officer = User(id=2, email="officer@nmiet.demo", password_hash=pwd, name="Santosh Shinde", role="OFFICER", college_id=1, department_id=1)
-    cell = User(id=3, email="cell@nmiet.demo", password_hash=pwd, name="Dr. S. K. Joshi", role="GRIEVANCE_CELL", college_id=1, department_id=7)
+    mahesh = User(id=1, email="student@nmiet.demo", password_hash=pwd, name="Mahesh Patil", role="STUDENT", college_id=1, academic_department="Computer Engineering", year="TE", division="Div B", phone="9876543210")
+    officer = User(id=2, email="officer@nmiet.demo", password_hash=pwd, name="Anand Jadhav", role="OFFICER", college_id=1, department_id=1)
+    cell = User(id=3, email="cell@nmiet.demo", password_hash=pwd, name="Sagar Gaikwad", role="GRIEVANCE_CELL", college_id=1, department_id=7)
     student_b = User(id=4, email="student@collegeb.demo", password_hash=pwd, name="Aarav Sharma", role="STUDENT", college_id=2, academic_department="IT", year="BE", division="Div A")
     cell_b = User(id=5, email="cell@collegeb.demo", password_hash=pwd, name="Prof. V. N. Patil", role="GRIEVANCE_CELL", college_id=2, department_id=10)
     student2 = User(id=6, email="student2@nmiet.demo", password_hash=pwd, name="Rohan Das", role="STUDENT", college_id=1, academic_department="Civil", year="SE")
 
-    db.add_all([saif, officer, cell, student_b, cell_b, student2])
+    db.add_all([mahesh, officer, cell, student_b, cell_b, student2])
     db.commit()
 
     # 6. Grievances
@@ -103,8 +103,8 @@ def setup_database():
 
     # Status History
     db.add_all([
-        StatusHistory(id=1, grievance_id=1, actor_id=1, actor_name="Saif Patil", actor_role="STUDENT", status="SUBMITTED", kind="PUBLIC_UPDATE", note="Public student note", is_public=True, created_at=now),
-        StatusHistory(id=2, grievance_id=1, actor_id=2, actor_name="Santosh Shinde", actor_role="OFFICER", status=None, kind="INTERNAL_REMARK", note="Internal staff remark", is_public=False, created_at=now),
+        StatusHistory(id=1, grievance_id=1, actor_id=1, actor_name="Mahesh Patil", actor_role="STUDENT", status="SUBMITTED", kind="PUBLIC_UPDATE", note="Public student note", is_public=True, created_at=now),
+        StatusHistory(id=2, grievance_id=1, actor_id=2, actor_name="Anand Jadhav", actor_role="OFFICER", status=None, kind="INTERNAL_REMARK", note="Internal staff remark", is_public=False, created_at=now),
     ])
     db.commit()
     db.close()

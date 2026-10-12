@@ -62,3 +62,28 @@ export function requireRole(allowedRoles: ('STUDENT' | 'OFFICER' | 'GRIEVANCE_CE
     next();
   };
 }
+
+// In-memory rate limiting buckets
+const rateLimitBuckets = new Map<string, number[]>();
+
+export function checkRateLimit(key: string, maxRequests: number, windowSeconds: number): boolean {
+  const now = Date.now();
+  const windowMs = windowSeconds * 1000;
+  const timestamps = rateLimitBuckets.get(key) || [];
+  const valid = timestamps.filter(t => now - t < windowMs);
+  if (valid.length >= maxRequests) {
+    rateLimitBuckets.set(key, valid);
+    return false;
+  }
+  valid.push(now);
+  rateLimitBuckets.set(key, valid);
+  return true;
+}
+
+export function sanitizeText(input: unknown, maxLength = 2000): string {
+  if (typeof input !== 'string') return '';
+  return input
+    .replace(/[<>]/g, '')
+    .trim()
+    .slice(0, maxLength);
+}

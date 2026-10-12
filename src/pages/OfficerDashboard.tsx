@@ -5,6 +5,7 @@ import { Grievance } from '../types';
 import { StatusChip } from '../components/StatusChip';
 import { PriorityChip } from '../components/PriorityChip';
 import { SlaBadge } from '../components/SlaBadge';
+import { exportGrievancesToCsv, exportGrievancesToListPdf } from '../utils/exportUtils';
 
 interface OfficerDashboardProps {
   onSelectGrievance: (publicId: string) => void;
@@ -17,6 +18,58 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({ onSelectGrie
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [searchQ, setSearchQ] = useState('');
+  const [exportToast, setExportToast] = useState<string | null>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const getFilterSummary = () => {
+    const parts: string[] = [];
+    parts.push(`Department: ${user?.department_name || 'Assigned Department'}`);
+    if (statusFilter !== 'all') parts.push(`Status: ${statusFilter}`);
+    if (priorityFilter !== 'all') parts.push(`Priority: ${priorityFilter}`);
+    if (searchQ) parts.push(`Search: "${searchQ}"`);
+    return parts.join(' | ');
+  };
+
+  const handleExportCsv = () => {
+    if (grievances.length === 0) {
+      alert('No grievances available in the current department view to export.');
+      return;
+    }
+    try {
+      const deptCode = (user?.department_name || 'Dept').replace(/[^a-zA-Z0-9]/g, '_');
+      const { count, filename } = exportGrievancesToCsv({
+        grievances,
+        filenamePrefix: `CampusFix_${deptCode}_Grievances`,
+        userRole: 'OFFICER',
+      });
+      setExportToast(`Exported ${count} departmental records to ${filename}`);
+      setTimeout(() => setExportToast(null), 4000);
+    } catch (err: any) {
+      alert(err.message || 'CSV export failed');
+    }
+  };
+
+  const handleExportPdf = () => {
+    if (grievances.length === 0) {
+      alert('No grievances available in the current department view to export.');
+      return;
+    }
+    setIsExportingPdf(true);
+    try {
+      const { count, filename } = exportGrievancesToListPdf({
+        grievances,
+        user,
+        filterSummary: getFilterSummary(),
+        title: `${user?.department_name || 'Department'} Grievance Register`,
+      });
+      setExportToast(`Generated PDF Register (${count} records): ${filename}`);
+      setTimeout(() => setExportToast(null), 4000);
+    } catch (err: any) {
+      alert(err.message || 'PDF export failed');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
 
   const fetchGrievances = async () => {
     setIsLoading(true);
@@ -57,7 +110,7 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({ onSelectGrie
               Department Operations
             </span>
             <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-semibold">
-              Department Queue
+              HOD Queue
             </span>
           </div>
           <h1 className="text-[22px] font-bold text-on-surface mt-0.5">
@@ -67,7 +120,7 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({ onSelectGrie
 
         <div className="flex items-center gap-2">
           <span className="text-[12px] text-secondary">
-            Officer on Duty: <strong>{user?.name}</strong>
+            In Charge / HOD: <strong>{user?.name}</strong>
           </span>
         </div>
       </div>
@@ -112,7 +165,7 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({ onSelectGrie
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -136,8 +189,45 @@ export const OfficerDashboard: React.FC<OfficerDashboardProps> = ({ onSelectGrie
             <option value="Medium">Medium</option>
             <option value="Low">Low</option>
           </select>
+
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="h-10 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-1.5 text-[12px] font-medium shadow-xs transition-colors cursor-pointer whitespace-nowrap"
+            title="Export department queue to CSV spreadsheet"
+          >
+            <span className="material-symbols-outlined text-[16px] text-primary">file_download</span>
+            <span>Export CSV</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            disabled={isExportingPdf}
+            className="h-10 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-1.5 text-[12px] font-medium shadow-xs transition-colors cursor-pointer whitespace-nowrap disabled:opacity-60"
+            title="Export department register as PDF report"
+          >
+            <span className="material-symbols-outlined text-[16px] text-rose-600">picture_as_pdf</span>
+            <span>{isExportingPdf ? 'Exporting...' : 'Export PDF'}</span>
+          </button>
         </div>
       </div>
+
+      {exportToast && (
+        <div className="p-3 rounded-xl bg-primary-container text-on-primary flex items-center justify-between text-[13px] font-medium shadow-sm animate-fade-in">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>{exportToast}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExportToast(null)}
+            className="text-on-primary hover:opacity-80 text-[11px] font-bold"
+          >
+            DISMISS
+          </button>
+        </div>
+      )}
 
       {/* 1. DEDICATED OFFICER MOBILE QUEUE (Visible on small screens: md:hidden) */}
       <div className="block md:hidden space-y-3">

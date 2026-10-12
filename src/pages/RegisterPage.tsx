@@ -111,10 +111,17 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
     <div className="flex-1 flex flex-col w-full max-w-md mx-auto py-8 px-4 animate-fade-in">
       {/* Brand Header */}
       <div className="flex items-center justify-between py-2">
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2 cursor-pointer select-none group"
+          onClick={onNavigateLogin}
+          role="button"
+          tabIndex={0}
+          title="CampusFix AI — Back to Sign In"
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onNavigateLogin()}
+        >
           <CampusFixLogo size={36} />
           <div>
-            <p className="text-[11px] text-secondary tracking-wide uppercase font-semibold">
+            <p className="text-[11px] text-secondary tracking-wide uppercase font-semibold group-hover:text-primary transition-colors">
               CampusFix AI
             </p>
             <p className="text-[14px] font-semibold text-on-surface">Student Portal</p>

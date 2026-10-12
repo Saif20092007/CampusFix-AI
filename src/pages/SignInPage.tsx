@@ -13,12 +13,19 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Forgot password state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
 
     setErrorMsg(null);
+    setSuccessMsg(null);
 
     const cleanEmail = email.trim().toLowerCase();
     const parts = cleanEmail.split('@');
@@ -33,16 +40,23 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
 
     try {
       await login(cleanEmail, password);
+      setSuccessMsg('Authentication successful! Loading portal...');
     } catch (err: any) {
       setErrorMsg(err.message || 'Invalid email or password');
       setIsSubmitting(false);
     }
   };
 
+  const handleForgotPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) return;
+    setForgotSent(true);
+  };
+
   return (
     <div className="flex-1 flex flex-col justify-center items-center w-full max-w-md mx-auto py-8 px-4 animate-fade-in">
       {/* Top Badge */}
-      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant text-[11px] font-medium mb-3 shadow-sm">
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant text-[11px] font-medium mb-3 shadow-xs">
         <span className="material-symbols-outlined text-primary text-[15px]" style={{ fontVariationSettings: "'FILL' 1" }}>
           verified_user
         </span>
@@ -50,15 +64,17 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
       </div>
 
       {/* Main Logo & Title */}
-      <img
-        src="/campusfix-logo.png"
-        alt="CampusFix AI Logo"
-        className="w-16 h-16 rounded-2xl object-cover shadow-md mb-2 select-none"
-      />
+      <a href="/" className="flex flex-col items-center group cursor-pointer" aria-label="CampusFix Home">
+        <img
+          src="/campusfix-logo.png"
+          alt="CampusFix AI Logo"
+          className="w-16 h-16 rounded-2xl object-cover shadow-md mb-2 select-none group-hover:scale-105 transition-transform"
+        />
+        <h1 className="text-[24px] font-bold text-on-surface tracking-tight text-center">
+          CampusFix AI
+        </h1>
+      </a>
 
-      <h1 className="text-[24px] font-bold text-on-surface tracking-tight text-center">
-        CampusFix AI
-      </h1>
       <p className="text-[13px] text-secondary text-center max-w-xs mt-1 leading-snug">
         AI-Powered College Grievance Management
       </p>
@@ -70,11 +86,18 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
       </div>
 
       {/* Form Card */}
-      <div className="w-full mt-4 bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-surface-container">
+      <div className="w-full mt-4 bg-surface-container-lowest rounded-2xl p-5 shadow-sm border border-surface-container">
         {errorMsg && (
-          <div className="mb-4 p-3 rounded-xl bg-error-container text-on-error-container text-[12px] flex items-center gap-2">
+          <div className="mb-4 p-3 rounded-xl bg-error-container text-on-error-container text-[12px] flex items-center gap-2 animate-fade-in">
             <span className="material-symbols-outlined text-[16px] text-error shrink-0">error</span>
             <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="mb-4 p-3 rounded-xl bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 text-[12px] flex items-center gap-2 animate-fade-in">
+            <span className="material-symbols-outlined text-[16px] text-emerald-600 shrink-0">check_circle</span>
+            <span>{successMsg}</span>
           </div>
         )}
 
@@ -98,7 +121,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="yourname@nmiet.edu.in"
-                className="w-full h-12 pl-10 pr-3 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm transition-all"
+                className="w-full h-12 pl-10 pr-3 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-xs transition-all"
               />
             </div>
             <span className="text-[11px] text-secondary mt-1">
@@ -114,8 +137,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
               </label>
               <button
                 type="button"
-                onClick={() => alert('Password reset link has been dispatched to your email address.')}
-                className="text-[11px] text-primary hover:underline"
+                onClick={() => {
+                  setForgotEmail(email);
+                  setForgotSent(false);
+                  setShowForgotModal(true);
+                }}
+                className="text-[11px] text-primary hover:underline cursor-pointer"
               >
                 Forgot password?
               </button>
@@ -131,13 +158,13 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full h-12 pl-10 pr-12 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm transition-all"
+                className="w-full h-12 pl-10 pr-12 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-xs transition-all"
               />
               <button
                 type="button"
                 aria-label="Toggle password visibility"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-0 top-0 h-12 w-12 flex items-center justify-center text-secondary hover:text-on-surface active:scale-95 transition-transform"
+                className="absolute right-0 top-0 h-12 w-12 flex items-center justify-center text-secondary hover:text-on-surface active:scale-95 transition-transform cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[20px]">
                   {showPassword ? 'visibility_off' : 'visibility'}
@@ -186,7 +213,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
               <button
                 type="button"
                 onClick={onNavigateRegister}
-                className="font-medium text-primary hover:underline ml-0.5"
+                className="font-medium text-primary hover:underline ml-0.5 cursor-pointer"
               >
                 Create student account
               </button>
@@ -194,6 +221,93 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
           </div>
         </form>
       </div>
+
+      {/* Emergency Assistance Links */}
+      <div className="mt-6 flex flex-col items-center gap-1.5 text-center text-[12px] text-secondary">
+        <span>Need urgent campus help?</span>
+        <div className="flex items-center gap-4">
+          <a
+            href="tel:+919822044910"
+            className="text-primary hover:underline font-mono inline-flex items-center gap-1"
+          >
+            <span className="material-symbols-outlined text-[14px]">call</span>
+            <span>+91 98220 44910</span>
+          </a>
+          <span>&middot;</span>
+          <a
+            href="mailto:grievance@nmiet.edu.in"
+            className="text-primary hover:underline font-mono inline-flex items-center gap-1"
+          >
+            <span className="material-symbols-outlined text-[14px]">mail</span>
+            <span>grievance@nmiet.edu.in</span>
+          </a>
+        </div>
+      </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setShowForgotModal(false)}
+        >
+          <div
+            className="bg-surface-container-lowest max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-surface-container relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowForgotModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-secondary hover:text-on-surface cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">close</span>
+            </button>
+
+            <div className="flex items-center gap-2 text-primary font-bold text-[18px] mb-2">
+              <span className="material-symbols-outlined text-[24px]">lock_reset</span>
+              <h2>Reset Password</h2>
+            </div>
+
+            {forgotSent ? (
+              <div className="flex flex-col gap-3 py-2 animate-fade-in">
+                <div className="p-3 rounded-xl bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 text-[13px] flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-emerald-600 shrink-0">check_circle</span>
+                  <span>A secure reset link has been dispatched to <strong>{forgotEmail}</strong>.</span>
+                </div>
+                <p className="text-[12px] text-secondary">
+                  Check your college inbox or spam folder. For demo accounts (student@nmiet.demo), the default password is <strong>campus123</strong>.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(false)}
+                  className="mt-2 w-full h-10 rounded-xl bg-primary text-on-primary font-semibold text-[13px] cursor-pointer"
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="flex flex-col gap-3 mt-1">
+                <p className="text-[13px] text-secondary leading-relaxed">
+                  Enter your official college email address to receive password instructions.
+                </p>
+                <input
+                  type="email"
+                  required
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="yourname@nmiet.edu.in"
+                  className="w-full h-11 px-3 rounded-xl bg-surface-container-lowest text-on-surface text-[13px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container"
+                />
+                <button
+                  type="submit"
+                  className="w-full h-11 rounded-xl bg-primary text-on-primary font-semibold text-[14px] cursor-pointer hover:opacity-95 mt-1"
+                >
+                  Send Recovery Link
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

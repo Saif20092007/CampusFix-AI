@@ -232,7 +232,7 @@ function getInitialDatabase(): DatabaseSchema {
       id: 1,
       email: 'student@nmiet.demo',
       password_hash: defaultPasswordHash,
-      name: 'Saif Sayyad',
+      name: 'Mahesh Patil',
       role: 'STUDENT',
       college_id: 1,
       department_id: null,
@@ -246,10 +246,10 @@ function getInitialDatabase(): DatabaseSchema {
       id: 2,
       email: 'officer@nmiet.demo',
       password_hash: defaultPasswordHash,
-      name: 'Santosh Shinde',
+      name: 'Anand Jadhav',
       role: 'OFFICER',
       college_id: 1,
-      department_id: 1, // Electrical Maintenance
+      department_id: 1,
       academic_department: null,
       year: null,
       division: null,
@@ -260,7 +260,7 @@ function getInitialDatabase(): DatabaseSchema {
       id: 3,
       email: 'cell@nmiet.demo',
       password_hash: defaultPasswordHash,
-      name: 'Dr. Mahesh Wankhede',
+      name: 'Sagar Gaikwad',
       role: 'GRIEVANCE_CELL',
       college_id: 1,
       department_id: 7, // Grievance Cell
@@ -355,7 +355,7 @@ function getInitialDatabase(): DatabaseSchema {
       public_id: 'cf-00124-nmiet-8a7b',
       display_no: 'CF-00124',
       college_id: 1,
-      student_id: 1, // Saif Sayyad
+      student_id: 1, // Mahesh Patil
       description: 'Hallway is completely pitch black. Two students tripped yesterday near the fire reel during evening study hours. Tube lights have been flickering since yesterday evening and completely went dark around 9 PM. Urgent fix needed as it is right beside the fire exit.',
       summary: 'No light in Hostel B corridor, dangerous trip hazard',
       category_id: 1, // Electrical
@@ -367,7 +367,7 @@ function getInitialDatabase(): DatabaseSchema {
       created_at: getPastIso(16),
       resolved_at: null,
       assigned_to_id: 2,
-      assigned_to_name: 'Santosh Shinde (Shift B)',
+      assigned_to_name: 'Anand Jadhav',
       resolution_note: null,
     },
     // Grievance 2: CF-00118 (Resolved, IT, Medium)
@@ -376,7 +376,7 @@ function getInitialDatabase(): DatabaseSchema {
       public_id: 'cf-00118-nmiet-9b8c',
       display_no: 'CF-00118',
       college_id: 1,
-      student_id: 1, // Saif Sayyad
+      student_id: 1, // Mahesh Patil
       description: 'Gateway IP failure during DBMS practical test. Access point restarted and DNS cache flushed by System Admin. All workstations are now connecting reliably.',
       summary: 'Wi-Fi not working in Computer Lab 204',
       category_id: 2, // IT Services
@@ -397,7 +397,7 @@ function getInitialDatabase(): DatabaseSchema {
       public_id: 'cf-00110-nmiet-4c3d',
       display_no: 'CF-00110',
       college_id: 1,
-      student_id: 1, // Saif Sayyad
+      student_id: 1, // Mahesh Patil
       description: 'Continuous water overflow spreading to corridor tiles creating a slipping hazard near staircase on ground floor of Block C.',
       summary: 'Water leakage near Block C washroom',
       category_id: 4, // Water / Civil
@@ -483,7 +483,7 @@ function getInitialDatabase(): DatabaseSchema {
       id: 1,
       grievance_id: 1,
       actor_id: 1,
-      actor_name: 'Saif Sayyad',
+      actor_name: 'Mahesh Patil',
       actor_role: 'STUDENT',
       status: 'SUBMITTED',
       kind: 'STATUS_CHANGE',
@@ -495,11 +495,11 @@ function getInitialDatabase(): DatabaseSchema {
       id: 2,
       grievance_id: 1,
       actor_id: 3,
-      actor_name: 'Mr. R. V. Kulkarni (Estate)',
+      actor_name: 'Sagar Gaikwad',
       actor_role: 'GRIEVANCE_CELL',
       status: 'ASSIGNED',
       kind: 'STATUS_CHANGE',
-      note: 'Routed to Electrical Maintenance. Assigned to lead technician Santosh Shinde (Shift B).',
+      note: 'Routed to Department. Assigned to Anand Jadhav.',
       is_public: true,
       created_at: getPastIso(15),
     },
@@ -507,11 +507,11 @@ function getInitialDatabase(): DatabaseSchema {
       id: 3,
       grievance_id: 1,
       actor_id: 2,
-      actor_name: 'Santosh Shinde (Tech)',
+      actor_name: 'Anand Jadhav',
       actor_role: 'OFFICER',
       status: null,
       kind: 'INTERNAL_REMARK',
-      note: 'Instructed Santosh to check circuit breaker at Sub-Panel B2 as recurring trips occurred last week.',
+      note: 'Instructed team to inspect circuit breaker at Sub-Panel B2 as recurring trips occurred last week.',
       is_public: false,
       created_at: getPastIso(14),
     },
@@ -519,11 +519,11 @@ function getInitialDatabase(): DatabaseSchema {
       id: 4,
       grievance_id: 1,
       actor_id: 2,
-      actor_name: 'Santosh Shinde (Tech)',
+      actor_name: 'Anand Jadhav',
       actor_role: 'OFFICER',
       status: 'IN_PROGRESS',
       kind: 'STATUS_CHANGE',
-      note: 'Inspection scheduled. Replacement LED tube fixtures requisitioned from stores. Line fuse check underway. Store Slip #ES-4412 issued.',
+      note: 'Inspection scheduled. Replacement fixtures requisitioned from stores. Slip #ES-4412 issued.',
       is_public: true,
       created_at: getPastIso(12),
     },
@@ -531,11 +531,11 @@ function getInitialDatabase(): DatabaseSchema {
       id: 5,
       grievance_id: 1,
       actor_id: 2,
-      actor_name: 'Santosh Shinde (Tech)',
+      actor_name: 'Anand Jadhav',
       actor_role: 'OFFICER',
       status: null,
       kind: 'PUBLIC_UPDATE',
-      note: 'Maintenance team is on-site at Hostel B. Replaced 4 faulty LED electronic ballasts damaged by moisture.',
+      note: 'Maintenance team is on-site at Hostel B. Replaced faulty fixtures damaged by moisture.',
       is_public: true,
       created_at: getPastIso(3),
     },
@@ -556,27 +556,27 @@ function getInitialDatabase(): DatabaseSchema {
   const notifications: Notification[] = [
     {
       id: 1,
-      user_id: 1, // Saif Sayyad
+      user_id: 1, // Mahesh Patil
       grievance_id: 1,
       public_id: 'cf-00124-nmiet-8a7b',
       display_no: 'CF-00124',
-      message: 'Complaint CF-00124 is now in progress. Technician is on-site at Hostel B.',
+      message: 'Complaint CF-00124 is now in progress. Maintenance is on-site at Hostel B.',
       read: false,
       created_at: getPastIso(0.75),
     },
     {
       id: 2,
-      user_id: 1, // Saif Sayyad
+      user_id: 1, // Mahesh Patil
       grievance_id: 1,
       public_id: 'cf-00124-nmiet-8a7b',
       display_no: 'CF-00124',
-      message: 'Your complaint CF-00124 has been assigned to Electrical Maintenance department.',
+      message: 'Your complaint CF-00124 has been assigned to department.',
       read: false,
       created_at: getPastIso(2),
     },
     {
       id: 3,
-      user_id: 1, // Saif Sayyad
+      user_id: 1, // Mahesh Patil
       grievance_id: 2,
       public_id: 'cf-00118-nmiet-9b8c',
       display_no: 'CF-00118',
@@ -586,7 +586,7 @@ function getInitialDatabase(): DatabaseSchema {
     },
     {
       id: 4,
-      user_id: 1, // Saif Sayyad
+      user_id: 1, // Mahesh Patil
       grievance_id: 4,
       public_id: 'cf-00092-nmiet-2e1f',
       display_no: 'CF-00092',
@@ -597,11 +597,11 @@ function getInitialDatabase(): DatabaseSchema {
     // Staff Notification
     {
       id: 5,
-      user_id: 2, // Santosh Shinde (Officer)
+      user_id: 2, // Anand Jadhav (HOD)
       grievance_id: 1,
       public_id: 'cf-00124-nmiet-8a7b',
       display_no: 'CF-00124',
-      message: 'New high-priority ticket CF-00124 assigned to Electrical Maintenance.',
+      message: 'New high-priority ticket CF-00124 assigned to department.',
       read: false,
       created_at: getPastIso(15),
     },

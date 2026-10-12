@@ -6,6 +6,7 @@ import { StatusChip } from '../components/StatusChip';
 import { PriorityChip } from '../components/PriorityChip';
 import { SlaBadge } from '../components/SlaBadge';
 import { PhotoModal } from '../components/PhotoModal';
+import { exportSingleGrievancePdf } from '../utils/exportUtils';
 
 interface GrievanceCellTicketDetailProps {
   publicId: string;
@@ -21,6 +22,7 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // AI Summary State
   const [aiSummary, setAiSummary] = useState<GrievanceAiSummary | null>(null);
@@ -128,6 +130,18 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
     }
   };
 
+  const handleExportPdf = () => {
+    if (!grievance) return;
+    setIsExportingPdf(true);
+    try {
+      exportSingleGrievancePdf({ grievance, user, aiSummary });
+    } catch (err: any) {
+      alert(err.message || 'Failed to export case dossier');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   const handleConfirmResolve = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!grievance || !resolutionNote.trim()) return;
@@ -195,13 +209,24 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[11px] px-2.5 py-1 rounded-full bg-surface-container text-secondary border border-surface-container">
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            disabled={isExportingPdf}
+            className="h-8 px-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center gap-1.5 text-[12px] font-medium shadow-xs transition-colors cursor-pointer disabled:opacity-60"
+            title="Download complete Case Audit Dossier as PDF"
+          >
+            <span className="material-symbols-outlined text-[15px] text-rose-600">picture_as_pdf</span>
+            <span>{isExportingPdf ? 'Exporting...' : 'Export Dossier (PDF)'}</span>
+          </button>
+          <span className="text-[11px] px-2.5 py-1 rounded-full bg-surface-container text-secondary border border-surface-container hidden sm:inline">
             College Grievance Cell Review
           </span>
           <button
             type="button"
             onClick={() => window.print()}
             className="w-8 h-8 rounded-lg bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-secondary transition-colors"
+            title="Print view"
           >
             <span className="material-symbols-outlined text-[16px]">print</span>
           </button>
@@ -311,7 +336,7 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-[12px]">
-                      {(grievance.student?.full_name || grievance.student_name || 'Saif Sayyad')
+                      {(grievance.student?.full_name || grievance.student_name || 'Mahesh Patil')
                         .split(' ')
                         .map((n) => n[0])
                         .join('')
@@ -330,10 +355,14 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
                   </div>
 
                   {grievance.student?.phone && (
-                    <div className="flex items-center gap-1.5 text-secondary text-[12px]">
+                    <a
+                      href={`tel:${grievance.student.phone.replace(/[\s-]/g, '')}`}
+                      className="flex items-center gap-1.5 text-secondary hover:text-primary hover:underline text-[12px] transition-colors"
+                      title="Call student"
+                    >
                       <span className="material-symbols-outlined text-[15px]">call</span>
                       <span className="font-mono">{grievance.student.phone}</span>
-                    </div>
+                    </a>
                   )}
                 </div>
 
@@ -764,7 +793,7 @@ export const GrievanceCellTicketDetail: React.FC<GrievanceCellTicketDetailProps>
                   type="text"
                   value={targetTechName}
                   onChange={(e) => setTargetTechName(e.target.value)}
-                  placeholder="e.g. Santosh Shinde"
+                  placeholder="e.g. Anand Jadhav"
                   className="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface text-[13px] border border-surface-container"
                 />
               </div>

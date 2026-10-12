@@ -13,7 +13,7 @@ import {
   ComplaintAttachment,
   UPLOADS_DIR,
 } from './db.js';
-import { AuthenticatedRequest, requireAuth, requireRole, generateToken, hashPassword, verifyPassword } from './auth.js';
+import { AuthenticatedRequest, requireAuth, requireRole, generateToken, hashPassword, verifyPassword, checkRateLimit, sanitizeText } from './auth.js';
 import { analyzeWithGemini, saveAiAnalysis, summarizeGrievanceHistoryWithGemini } from './ai.js';
 import { calculateSla, computeDueAt } from './sla.js';
 
@@ -66,6 +66,12 @@ function checkGrievanceAccess(user: User, grievance: Grievance): boolean {
 // ==========================================
 
 router.post('/auth/register', (req, res) => {
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'ip';
+  if (!checkRateLimit('reg_' + clientIp, 10, 60)) {
+    res.status(429).json({ error: 'Too Many Requests', detail: 'Rate limit exceeded. Please wait a minute before trying again.' });
+    return;
+  }
+
   const { name, email, password, year, academic_department, division, phone } = req.body;
 
   if (!name || !email || !password) {
@@ -128,6 +134,12 @@ router.post('/auth/register', (req, res) => {
 });
 
 router.post('/auth/login', (req, res) => {
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'ip';
+  if (!checkRateLimit('login_' + clientIp, 15, 60)) {
+    res.status(429).json({ error: 'Too Many Requests', detail: 'Too many login attempts. Please wait 1 minute before trying again.' });
+    return;
+  }
+
   const { email, password } = req.body;
   if (!email || !password) {
     res.status(422).json({ error: 'Validation Error', detail: 'Email and password are required' });
@@ -149,7 +161,7 @@ router.post('/auth/login', (req, res) => {
   const db = loadDatabase();
   const user = db.users.find(u => 
     u.email.toLowerCase() === normalizedEmail ||
-    (u.id === 1 && (normalizedEmail === 'saif.sayyad@nmiet.edu.in' || normalizedEmail === 'student@nmiet.edu.in')) ||
+    (u.id === 1 && (normalizedEmail === 'mahesh.patil@nmiet.edu.in' || normalizedEmail === 'saif.sayyad@nmiet.edu.in' || normalizedEmail === 'student@nmiet.edu.in')) ||
     (u.id === 2 && normalizedEmail === 'officer@nmiet.edu.in') ||
     (u.id === 3 && (normalizedEmail === 'cell@nmiet.edu.in' || normalizedEmail === 'grievance@nmiet.edu.in')) ||
     (u.id === 4 && normalizedEmail === 'it.officer@nmiet.edu.in') ||
@@ -198,7 +210,7 @@ router.post('/auth/google', (req, res) => {
   const db = loadDatabase();
   let user = db.users.find(u =>
     u.email.toLowerCase() === normalizedEmail ||
-    (u.id === 1 && (normalizedEmail === 'saif.sayyad@nmiet.edu.in' || normalizedEmail === 'student@nmiet.edu.in'))
+    (u.id === 1 && (normalizedEmail === 'mahesh.patil@nmiet.edu.in' || normalizedEmail === 'saif.sayyad@nmiet.edu.in' || normalizedEmail === 'student@nmiet.edu.in'))
   );
 
   const defaultCollegeName = process.env.DEFAULT_REGISTRATION_COLLEGE || 'NMIET';
@@ -286,6 +298,11 @@ router.get('/meta/departments', requireAuth, (req: AuthenticatedRequest, res) =>
 
 router.post('/grievances/analyze', requireAuth, async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
+  if (!checkRateLimit('analyze_' + user.id, 20, 60)) {
+    res.status(429).json({ error: 'Too Many Requests', detail: 'Analysis rate limit exceeded. Please wait a moment.' });
+    return;
+  }
+
   const { description, location } = req.body;
 
   if (!description || typeof description !== 'string') {
@@ -293,8 +310,9 @@ router.post('/grievances/analyze', requireAuth, async (req: AuthenticatedRequest
     return;
   }
 
-  // Rate limiting / length limit: 1000 characters
-  const trimmed = description.trim().slice(0, 1000);
+  // Rate limiting / length limit & sanitization: 1000 characters
+  const trimmed = sanitizeText(description, 1000);
+  const sanitizedLocation = sanitizeText(location, 150);
   if (trimmed.length < 5) {
     res.status(422).json({ error: 'Validation Error', detail: 'Description must be at least 5 characters' });
     return;

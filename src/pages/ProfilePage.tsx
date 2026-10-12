@@ -39,10 +39,29 @@ export const ProfilePage: React.FC = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-[19px] font-bold text-on-surface truncate">{user.name}</h2>
             <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-semibold">
-              {user.role === 'GRIEVANCE_CELL' ? 'Grievance Cell' : user.role === 'OFFICER' ? 'Department Officer' : 'Student'}
+              {user.role === 'GRIEVANCE_CELL' ? 'Grievance Cell' : user.role === 'OFFICER' ? 'HOD' : 'Student'}
             </span>
           </div>
-          <span className="text-[12px] text-secondary font-mono truncate mt-0.5">{user.email}</span>
+          <div className="flex flex-wrap items-center gap-3 mt-1">
+            <a
+              href={`mailto:${user.email}`}
+              className="text-[12px] text-secondary hover:text-primary hover:underline font-mono truncate inline-flex items-center gap-1"
+              title="Send email"
+            >
+              <span className="material-symbols-outlined text-[14px]">mail</span>
+              <span>{user.email}</span>
+            </a>
+            {user.phone && (
+              <a
+                href={`tel:${user.phone.replace(/[\s-]/g, '')}`}
+                className="text-[12px] text-secondary hover:text-primary hover:underline font-mono inline-flex items-center gap-1"
+                title="Call phone"
+              >
+                <span className="material-symbols-outlined text-[14px]">call</span>
+                <span>{user.phone}</span>
+              </a>
+            )}
+          </div>
         </div>
       </div>
 

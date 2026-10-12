@@ -77,7 +77,7 @@ def seed_db():
                 id=1,
                 email="student@nmiet.demo",
                 password_hash=password_hash,
-                name="Saif Sayyad",
+                name="Mahesh Patil",
                 role="STUDENT",
                 college_id=1,
                 department_id=None,
@@ -91,10 +91,10 @@ def seed_db():
                 id=2,
                 email="officer@nmiet.demo",
                 password_hash=password_hash,
-                name="Santosh Shinde",
+                name="Anand Jadhav",
                 role="OFFICER",
                 college_id=1,
-                department_id=1,  # Electrical Maintenance
+                department_id=1,
                 academic_department=None,
                 year=None,
                 division=None,
@@ -105,7 +105,7 @@ def seed_db():
                 id=3,
                 email="cell@nmiet.demo",
                 password_hash=password_hash,
-                name="Dr. Mahesh Wankhede",
+                name="Sagar Gaikwad",
                 role="GRIEVANCE_CELL",
                 college_id=1,
                 department_id=8,  # Grievance Cell Central
@@ -122,7 +122,7 @@ def seed_db():
         # 6. Demo Grievances — covering all required statuses + overdue
         now = datetime.utcnow()
 
-        # --- G1: Saif's Electrical issue — IN_PROGRESS (main demo flow) ---
+        # --- G1: Mahesh's Electrical issue — IN_PROGRESS (main demo flow) ---
         g1 = Grievance(
             id=1,
             public_id="cf-demo-nmiet-001",
@@ -140,7 +140,7 @@ def seed_db():
             created_at=now - timedelta(hours=18),
             resolved_at=None,
             assigned_to_id=2,
-            assigned_to_name="Santosh Shinde",
+            assigned_to_name="Anand Jadhav",
             resolution_note=None,
         )
 
@@ -241,28 +241,28 @@ def seed_db():
         db.add_all([
             StatusHistory(
                 grievance_id=1,
-                actor_id=1, actor_name="Saif Sayyad", actor_role="STUDENT",
+                actor_id=1, actor_name="Mahesh Patil", actor_role="STUDENT",
                 status="SUBMITTED", kind="STATUS_CHANGE",
                 note="Complaint logged via AI portal.",
                 is_public=True, created_at=now - timedelta(hours=18)
             ),
             StatusHistory(
                 grievance_id=1,
-                actor_id=3, actor_name="Dr. Mahesh Wankhede", actor_role="GRIEVANCE_CELL",
+                actor_id=3, actor_name="Sagar Gaikwad", actor_role="GRIEVANCE_CELL",
                 status="ASSIGNED", kind="STATUS_CHANGE",
-                note="Routed to Electrical Maintenance. Assigned to Santosh Shinde.",
+                note="Routed to Department. Assigned to Anand Jadhav.",
                 is_public=True, created_at=now - timedelta(hours=16)
             ),
             StatusHistory(
                 grievance_id=1,
-                actor_id=2, actor_name="Santosh Shinde", actor_role="OFFICER",
+                actor_id=2, actor_name="Anand Jadhav", actor_role="OFFICER",
                 status="IN_PROGRESS", kind="STATUS_CHANGE",
                 note="Technician on-site with replacement LED tube lights.",
                 is_public=True, created_at=now - timedelta(hours=10)
             ),
             StatusHistory(
                 grievance_id=1,
-                actor_id=2, actor_name="Santosh Shinde", actor_role="OFFICER",
+                actor_id=2, actor_name="Anand Jadhav", actor_role="OFFICER",
                 status=None, kind="INTERNAL_REMARK",
                 note="Vendor invoice pending approval for high-bay LED fixtures. May need 1 more day.",
                 is_public=False,  # PRIVATE — student never sees this
@@ -270,7 +270,7 @@ def seed_db():
             ),
             StatusHistory(
                 grievance_id=1,
-                actor_id=2, actor_name="Santosh Shinde", actor_role="OFFICER",
+                actor_id=2, actor_name="Anand Jadhav", actor_role="OFFICER",
                 status=None, kind="PUBLIC_UPDATE",
                 note="Work in progress. LED fixture ordered. Expected completion by tomorrow morning.",
                 is_public=True, created_at=now - timedelta(hours=2)
@@ -280,7 +280,7 @@ def seed_db():
         # G2 — SUBMITTED (no actions yet)
         db.add(StatusHistory(
             grievance_id=2,
-            actor_id=1, actor_name="Saif Sayyad", actor_role="STUDENT",
+            actor_id=1, actor_name="Mahesh Patil", actor_role="STUDENT",
             status="SUBMITTED", kind="STATUS_CHANGE",
             note="Complaint submitted via CampusFix AI portal.",
             is_public=True, created_at=now - timedelta(hours=12)
@@ -290,21 +290,21 @@ def seed_db():
         db.add_all([
             StatusHistory(
                 grievance_id=3,
-                actor_id=1, actor_name="Saif Sayyad", actor_role="STUDENT",
+                actor_id=1, actor_name="Mahesh Patil", actor_role="STUDENT",
                 status="SUBMITTED", kind="STATUS_CHANGE",
                 note="Complaint submitted via CampusFix AI portal.",
                 is_public=True, created_at=now - timedelta(hours=16)
             ),
             StatusHistory(
                 grievance_id=3,
-                actor_id=3, actor_name="Dr. Mahesh Wankhede", actor_role="GRIEVANCE_CELL",
+                actor_id=3, actor_name="Sagar Gaikwad", actor_role="GRIEVANCE_CELL",
                 status="ASSIGNED", kind="STATUS_CHANGE",
                 note="Critical issue. Routed to Civil & Water Works for immediate action.",
                 is_public=True, created_at=now - timedelta(hours=15)
             ),
             StatusHistory(
                 grievance_id=3,
-                actor_id=3, actor_name="Dr. Mahesh Wankhede", actor_role="GRIEVANCE_CELL",
+                actor_id=3, actor_name="Sagar Gaikwad", actor_role="GRIEVANCE_CELL",
                 status="ESCALATED", kind="STATUS_CHANGE",
                 note="Escalated: Civil dept has not responded within 12h on a Critical issue. Central intervention required.",
                 is_public=False,  # PRIVATE escalation reason
@@ -313,7 +313,7 @@ def seed_db():
             # Student sees: "Your complaint has been escalated" — not the reason above
             StatusHistory(
                 grievance_id=3,
-                actor_id=3, actor_name="Dr. Mahesh Wankhede", actor_role="GRIEVANCE_CELL",
+                actor_id=3, actor_name="Sagar Gaikwad", actor_role="GRIEVANCE_CELL",
                 status=None, kind="PUBLIC_UPDATE",
                 note="This complaint has been escalated to the Grievance Cell for direct handling.",
                 is_public=True, created_at=now - timedelta(hours=4)
@@ -324,28 +324,28 @@ def seed_db():
         db.add_all([
             StatusHistory(
                 grievance_id=4,
-                actor_id=1, actor_name="Saif Sayyad", actor_role="STUDENT",
+                actor_id=1, actor_name="Mahesh Patil", actor_role="STUDENT",
                 status="SUBMITTED", kind="STATUS_CHANGE",
                 note="Complaint submitted via CampusFix AI portal.",
                 is_public=True, created_at=now - timedelta(hours=72)
             ),
             StatusHistory(
                 grievance_id=4,
-                actor_id=3, actor_name="Dr. Mahesh Wankhede", actor_role="GRIEVANCE_CELL",
+                actor_id=3, actor_name="Sagar Gaikwad", actor_role="GRIEVANCE_CELL",
                 status="ASSIGNED", kind="STATUS_CHANGE",
                 note="Routed to IT Services & Network.",
                 is_public=True, created_at=now - timedelta(hours=70)
             ),
             StatusHistory(
                 grievance_id=4,
-                actor_id=3, actor_name="Dr. Mahesh Wankhede", actor_role="GRIEVANCE_CELL",
+                actor_id=3, actor_name="Sagar Gaikwad", actor_role="GRIEVANCE_CELL",
                 status="IN_PROGRESS", kind="STATUS_CHANGE",
                 note="IT team investigating router drop issue.",
                 is_public=True, created_at=now - timedelta(hours=48)
             ),
             StatusHistory(
                 grievance_id=4,
-                actor_id=3, actor_name="Dr. Mahesh Wankhede", actor_role="GRIEVANCE_CELL",
+                actor_id=3, actor_name="Sagar Gaikwad", actor_role="GRIEVANCE_CELL",
                 status="RESOLVED", kind="STATUS_CHANGE",
                 note="Router replaced. Network stable.",
                 is_public=True, created_at=now - timedelta(hours=20)
@@ -356,14 +356,14 @@ def seed_db():
         db.add_all([
             StatusHistory(
                 grievance_id=5,
-                actor_id=1, actor_name="Saif Sayyad", actor_role="STUDENT",
+                actor_id=1, actor_name="Mahesh Patil", actor_role="STUDENT",
                 status="SUBMITTED", kind="STATUS_CHANGE",
                 note="Complaint submitted via CampusFix AI portal.",
                 is_public=True, created_at=now - timedelta(hours=192)
             ),
             StatusHistory(
                 grievance_id=5,
-                actor_id=3, actor_name="Dr. Mahesh Wankhede", actor_role="GRIEVANCE_CELL",
+                actor_id=3, actor_name="Sagar Gaikwad", actor_role="GRIEVANCE_CELL",
                 status="ASSIGNED", kind="STATUS_CHANGE",
                 note="Routed to Hostel Administration.",
                 is_public=True, created_at=now - timedelta(hours=190)

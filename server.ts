@@ -4,7 +4,6 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { spawn } from 'child_process';
 import apiRouter from './server/api.js';
 import { loadDatabase } from './server/db.js';
 
@@ -13,42 +12,10 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
-const FASTAPI_PORT = parseInt(process.env.FASTAPI_PORT || '8000', 10);
 const isProd = process.env.NODE_ENV === 'production';
 
 // Initialize in-memory / JSON database for embedded fallback
 loadDatabase();
-
-// Attempt to spawn Python FastAPI backend if available
-let fastApiProcess: any = null;
-try {
-  const venvPyWin = path.resolve(__dirname, '.venv', 'Scripts', 'python.exe');
-  const venvPyNix = path.resolve(__dirname, '.venv', 'bin', 'python');
-  let pythonCmd = 'python3';
-  if (fs.existsSync(venvPyWin)) {
-    pythonCmd = venvPyWin;
-  } else if (fs.existsSync(venvPyNix)) {
-    pythonCmd = venvPyNix;
-  } else if (process.platform === 'win32') {
-    pythonCmd = 'python';
-  }
-
-  fastApiProcess = spawn(
-    pythonCmd,
-    ['-m', 'uvicorn', 'main:app', '--app-dir', 'backend', '--host', '127.0.0.1', '--port', FASTAPI_PORT.toString(), '--reload'],
-    { stdio: 'inherit', env: { ...process.env, PYTHONPATH: 'backend' } }
-  );
-
-  fastApiProcess.on('error', (err: any) => {
-    console.warn(`[FastAPI] Process could not be started: ${err.message}`);
-  });
-
-  process.on('exit', () => {
-    try {
-      fastApiProcess?.kill();
-    } catch {}
-  });
-} catch {}
 
 app.use(cors());
 app.use(express.json());
@@ -56,49 +23,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Healthcheck
 app.get('/health', (_req, res) => {
-  res.json({ status: 'healthy', app: 'CampusFix AI', version: '2.4.0', backend: 'FastAPI / Hybrid' });
+  res.json({ status: 'healthy', app: 'CampusFix AI', version: '2.4.0', backend: 'Node.js Express' });
 });
 
-// Proxy API requests to FastAPI with transparent fallback to embedded API engine
-app.use('/api', async (req, res, next) => {
-  try {
-    const targetUrl = `http://127.0.0.1:${FASTAPI_PORT}/api${req.url}`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-
-    const headers: Record<string, string> = {};
-    for (const [key, value] of Object.entries(req.headers)) {
-      if (typeof value === 'string' && key.toLowerCase() !== 'host') {
-        headers[key] = value;
-      }
-    }
-
-    const init: RequestInit = {
-      method: req.method,
-      headers,
-      signal: controller.signal,
-    };
-
-    if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
-      init.body = JSON.stringify(req.body);
-      headers['content-type'] = 'application/json';
-    }
-
-    const response = await fetch(targetUrl, init);
-    clearTimeout(timeout);
-
-    res.status(response.status);
-    response.headers.forEach((value, key) => {
-      res.setHeader(key, value);
-    });
-
-    const responseBuffer = await response.arrayBuffer();
-    res.send(Buffer.from(responseBuffer));
-  } catch (_err) {
-    // If FastAPI is not running or timed out, gracefully handle via embedded router
-    return apiRouter(req, res, next);
-  }
-});
+// Primary API Router
+app.use('/api', apiRouter);
 
 // Static public assets fallback (logo, icons, pwa)
 app.use(express.static(path.resolve(__dirname, 'public')));
@@ -113,7 +42,7 @@ async function startServer() {
     const vite = await createServer({
       server: {
         middlewareMode: true,
-        hmr: true,
+        hmr: false,
       },
       appType: 'spa',
     });

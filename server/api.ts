@@ -356,7 +356,7 @@ router.post('/attachments/upload', requireAuth, (req: AuthenticatedRequest, res)
     return;
   }
 
-  upload.single('photo')(req, res, err => {
+  upload.single('photo')(req as any, res as any, (err: any) => {
     if (err) {
       if (err.message === 'INVALID_FILE_TYPE') {
         res.status(400).json({ error: 'Bad Request', detail: 'Please upload a JPG, PNG or WEBP image under 3 MB.' });

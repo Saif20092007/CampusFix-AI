@@ -19,6 +19,7 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { api } from './services/api';
 import { AiAnalysisResponse, Grievance, NotificationItem } from './types';
 import { UploadedFileState } from './components/PhotoUploader';
+import { TopLeftDemoButton } from './components/TopLeftDemoButton';
 
 function MainApp() {
   const { user, isLoading } = useAuth();
@@ -71,7 +72,8 @@ function MainApp() {
   // Not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen bg-surface text-on-surface flex flex-col">
+      <div className="min-h-screen bg-surface text-on-surface flex flex-col relative">
+        <TopLeftDemoButton />
         {authView === 'signin' ? (
           <SignInPage onNavigateRegister={() => setAuthView('register')} />
         ) : (

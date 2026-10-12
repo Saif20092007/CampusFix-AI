@@ -93,6 +93,15 @@ export const api = {
     return res;
   },
 
+  async loginWithGoogle(data: { email: string; name?: string }): Promise<{ token: string; user: User }> {
+    const res = await request<{ token: string; user: User }>('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    setStoredToken(res.token);
+    return res;
+  },
+
   async getMe(): Promise<User> {
     return request<User>('/api/me');
   },

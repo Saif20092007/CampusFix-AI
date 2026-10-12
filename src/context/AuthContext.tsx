@@ -9,6 +9,7 @@ interface AuthContextType {
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   login: (email: string, password: string) => Promise<void>;
   register: (data: any) => Promise<void>;
+  loginWithGoogle: (data: { email: string; name?: string }) => Promise<void>;
   logout: () => void;
   switchDemoUser: (email: string) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -90,6 +91,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGoogle = async (data: { email: string; name?: string }) => {
+    setIsLoading(true);
+    try {
+      const res = await api.loginWithGoogle(data);
+      setUser(res.user);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = () => {
     api.logout();
     setUser(null);
@@ -114,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setTheme,
         login,
         register,
+        loginWithGoogle,
         logout,
         switchDemoUser,
         refreshUser,

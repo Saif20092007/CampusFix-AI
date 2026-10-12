@@ -98,6 +98,14 @@ def login(
         )
 
     clean_email = payload.email.strip().lower()
+    parts = clean_email.split("@")
+    is_allowed_domain = len(parts) == 2 and (parts[1] == "nmiet.edu.in" or parts[1].endswith(".demo"))
+    if not is_allowed_domain:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access restricted: Only official college email addresses ending with @nmiet.edu.in are permitted.",
+        )
+
     user = db.query(User).filter(User.email == clean_email).first()
 
     if not user or not verify_password(payload.password, user.password_hash):

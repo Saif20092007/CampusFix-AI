@@ -6,7 +6,7 @@ interface SignInPageProps {
 }
 
 export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) => {
-  const { login, switchDemoUser } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -19,23 +19,22 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
     if (!email || !password) return;
 
     setErrorMsg(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    const parts = cleanEmail.split('@');
+    const isAllowedDomain = parts.length === 2 && (parts[1] === 'nmiet.edu.in' || parts[1].endsWith('.demo'));
+
+    if (!isAllowedDomain) {
+      setErrorMsg('Access restricted: Only official college email addresses ending with @nmiet.edu.in are permitted.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await login(email, password);
+      await login(cleanEmail, password);
     } catch (err: any) {
       setErrorMsg(err.message || 'Invalid email or password');
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleQuickDemo = async (demoEmail: string) => {
-    setErrorMsg(null);
-    setIsSubmitting(true);
-    try {
-      await switchDemoUser(demoEmail);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Quick login failed');
       setIsSubmitting(false);
     }
   };
@@ -51,9 +50,11 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
       </div>
 
       {/* Main Logo & Title */}
-      <div className="w-12 h-12 rounded-xl bg-primary-container text-on-primary flex items-center justify-center mb-2 shadow-md">
-        <span className="material-symbols-outlined text-[26px]">domain_verification</span>
-      </div>
+      <img
+        src="/campusfix-logo.png"
+        alt="CampusFix AI Logo"
+        className="w-16 h-16 rounded-2xl object-cover shadow-md mb-2 select-none"
+      />
 
       <h1 className="text-[24px] font-bold text-on-surface tracking-tight text-center">
         CampusFix AI
@@ -72,7 +73,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
       <div className="w-full mt-4 bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-surface-container">
         {errorMsg && (
           <div className="mb-4 p-3 rounded-xl bg-error-container text-on-error-container text-[12px] flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-error">error</span>
+            <span className="material-symbols-outlined text-[16px] text-error shrink-0">error</span>
             <span>{errorMsg}</span>
           </div>
         )}
@@ -80,9 +81,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Email */}
           <div className="flex flex-col">
-            <label className="text-[12px] font-semibold text-on-surface mb-1" htmlFor="collegeEmail">
-              Email Address
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[12px] font-semibold text-on-surface" htmlFor="collegeEmail">
+                College Email Address
+              </label>
+              <span className="text-[11px] font-medium text-primary">@nmiet.edu.in</span>
+            </div>
             <div className="relative flex items-center">
               <span className="material-symbols-outlined absolute left-3 text-secondary text-[20px] pointer-events-none">
                 mail
@@ -93,10 +97,13 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. saif.patil@email.com"
+                placeholder="yourname@nmiet.edu.in"
                 className="w-full h-12 pl-10 pr-3 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm transition-all"
               />
             </div>
+            <span className="text-[11px] text-secondary mt-1">
+              Must be your official college email (<strong className="text-on-surface font-medium">@nmiet.edu.in</strong>)
+            </span>
           </div>
 
           {/* Password */}
@@ -186,108 +193,6 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigateRegister }) =>
             </p>
           </div>
         </form>
-
-        {/* Quick Demo Login Table for NMIET Roles: Student, Officer, Grievance Cell */}
-        <div className="mt-5 pt-4 border-t border-surface-container">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] font-semibold text-secondary uppercase tracking-wider">
-              NMIET Demo Accounts
-            </p>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-container text-secondary">
-              password: campus123
-            </span>
-          </div>
-
-          <div className="overflow-hidden rounded-xl border border-surface-container bg-surface-container-low text-[12px]">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-surface-container text-[10px] uppercase font-bold text-secondary border-b border-surface-container">
-                  <th className="py-1.5 px-2.5">Role</th>
-                  <th className="py-1.5 px-2.5 hidden sm:table-cell">Email</th>
-                  <th className="py-1.5 px-2">College</th>
-                  <th className="py-1.5 px-2.5">Description</th>
-                  <th className="py-1.5 px-2 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-container">
-                <tr className="hover:bg-surface-container transition-colors">
-                  <td className="py-2 px-2.5 font-bold text-on-surface whitespace-nowrap">
-                    Student
-                  </td>
-                  <td className="py-2 px-2.5 font-mono text-[11px] text-secondary hidden sm:table-cell">
-                    student@nmiet.demo
-                  </td>
-                  <td className="py-2 px-2 font-semibold text-primary">
-                    NMIET
-                  </td>
-                  <td className="py-2 px-2.5 text-on-surface-variant text-[11px]">
-                    Saif Sayyad (SY CSE, Division B, Roll 56)
-                  </td>
-                  <td className="py-2 px-2 text-right">
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => handleQuickDemo('student@nmiet.demo')}
-                      className="px-2.5 py-1 rounded-md bg-primary-container text-on-primary text-[11px] font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                    >
-                      Login
-                    </button>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-surface-container transition-colors">
-                  <td className="py-2 px-2.5 font-bold text-on-surface whitespace-nowrap">
-                    Officer
-                  </td>
-                  <td className="py-2 px-2.5 font-mono text-[11px] text-secondary hidden sm:table-cell">
-                    officer@nmiet.demo
-                  </td>
-                  <td className="py-2 px-2 font-semibold text-primary">
-                    NMIET
-                  </td>
-                  <td className="py-2 px-2.5 text-on-surface-variant text-[11px]">
-                    Santosh Shinde (Electrical Maintenance)
-                  </td>
-                  <td className="py-2 px-2 text-right">
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => handleQuickDemo('officer@nmiet.demo')}
-                      className="px-2.5 py-1 rounded-md bg-primary-container text-on-primary text-[11px] font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                    >
-                      Login
-                    </button>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-surface-container transition-colors">
-                  <td className="py-2 px-2.5 font-bold text-on-surface whitespace-nowrap">
-                    Grievance Cell
-                  </td>
-                  <td className="py-2 px-2.5 font-mono text-[11px] text-secondary hidden sm:table-cell">
-                    cell@nmiet.demo
-                  </td>
-                  <td className="py-2 px-2 font-semibold text-primary">
-                    NMIET
-                  </td>
-                  <td className="py-2 px-2.5 text-on-surface-variant text-[11px]">
-                    Dr. Mahesh Wankhede (NMIET Grievance Cell)
-                  </td>
-                  <td className="py-2 px-2 text-right">
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => handleQuickDemo('cell@nmiet.demo')}
-                      className="px-2.5 py-1 rounded-md bg-primary-container text-on-primary text-[11px] font-semibold hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                    >
-                      Login
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
     </div>
   );

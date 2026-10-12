@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { CampusFixLogo } from '../components/CampusFixLogo';
 
 interface RegisterPageProps {
   onNavigateLogin: () => void;
@@ -11,28 +12,63 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [academicYear, setAcademicYear] = useState('TE');
-  const [academicDept, setAcademicDept] = useState('Computer Engineering');
-  const [division, setDivision] = useState('Div B');
+  const [academicYear, setAcademicYear] = useState('');
+  const [academicDept, setAcademicDept] = useState('');
+  const [division, setDivision] = useState('');
   const [enrolledCheck, setEnrolledCheck] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showDomainModal, setShowDomainModal] = useState(false);
 
-  // Compute completion
-  let filledCount = 0;
-  if (fullname.trim()) filledCount++;
-  if (email.trim()) filledCount++;
-  if (password.length >= 8) filledCount++;
-  if (academicYear) filledCount++;
-  if (academicDept) filledCount++;
-  if (division) filledCount++;
-  if (enrolledCheck) filledCount++;
-  const completionPct = Math.max(15, Math.round((filledCount / 7) * 100));
+  const checkEmailValidity = (val: string): boolean => {
+    const clean = val.trim().toLowerCase();
+    if (!clean) return true;
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+    const parts = clean.split('@');
+    if (!emailRegex.test(clean) || parts.length !== 2 || parts[1] !== 'nmiet.edu.in') {
+      setErrorMsg(null);
+      setShowDomainModal(true);
+      return false;
+    }
+    return true;
+  };
+
+  const handleYearChange = (newYear: string) => {
+    setAcademicYear(newYear);
+    setDivision('');
+  };
+
+  const getDivisionOptions = () => {
+    if (academicYear === 'FE') {
+      const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'];
+      return letters.map(letter => `Div ${letter}`);
+    } else if (['SE', 'TE', 'BE'].includes(academicYear)) {
+      return ['Div A', 'Div B', 'Div C'];
+    } else if (['BCA', 'MCA', 'M.Tech', 'B.Voc'].includes(academicYear)) {
+      return ['Div A'];
+    }
+    return [];
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullname || !email || !password) return;
+
+    if (!academicYear) {
+      setErrorMsg('Please select your Academic Year.');
+      return;
+    }
+
+    if (!academicDept) {
+      setErrorMsg('Please select your Academic Department / Stream.');
+      return;
+    }
+
+    if (!division) {
+      setErrorMsg('Please select your Division.');
+      return;
+    }
 
     if (!enrolledCheck) {
       setErrorMsg('Please confirm enrollment verification.');
@@ -41,6 +77,15 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
 
     if (password.length < 8) {
       setErrorMsg('Password must be at least 8 characters long.');
+      return;
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+    const parts = cleanEmail.split('@');
+    if (!emailRegex.test(cleanEmail) || parts.length !== 2 || parts[1] !== 'nmiet.edu.in') {
+      setErrorMsg(null);
+      setShowDomainModal(true);
       return;
     }
 
@@ -67,11 +112,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
       {/* Brand Header */}
       <div className="flex items-center justify-between py-2">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm">
-            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-              domain
-            </span>
-          </div>
+          <CampusFixLogo size={36} />
           <div>
             <p className="text-[11px] text-secondary tracking-wide uppercase font-semibold">
               CampusFix AI
@@ -88,24 +129,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
         </div>
       </div>
 
-      {/* Header Card with Progress */}
+      {/* Header Card (Profile Completion Bar Removed) */}
       <div className="relative overflow-hidden rounded-xl bg-surface-container-low p-4 shadow-sm mt-2 mb-4 border border-surface-container">
         <h1 className="text-[20px] font-bold text-on-surface tracking-tight">Create Student Account</h1>
         <p className="text-[13px] text-secondary mt-1 leading-snug">
           Register to report and track campus issues in real time.
         </p>
-
-        {/* Progress Meter */}
-        <div className="mt-3 pt-2 border-t border-surface-container flex items-center justify-between text-secondary">
-          <span className="text-[11px]">Profile Completion</span>
-          <span className="text-[11px] font-semibold text-primary">{completionPct}% Ready</span>
-        </div>
-        <div className="w-full bg-surface-container h-1.5 rounded-full mt-1 overflow-hidden">
-          <div
-            className="bg-primary-container h-full rounded-full transition-all duration-300"
-            style={{ width: `${completionPct}%` }}
-          ></div>
-        </div>
       </div>
 
       {errorMsg && (
@@ -115,8 +144,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
         </div>
       )}
 
-      {/* Registration Form */}
-      <form onSubmit={handleRegister} className="flex flex-col gap-3.5 bg-surface-container-lowest p-5 rounded-xl border border-surface-container shadow-sm">
+      {/* Registration Form Card */}
+      <div className="bg-surface-container-lowest p-5 rounded-xl border border-surface-container shadow-sm space-y-4">
+        {/* Registration Form */}
+        <form onSubmit={handleRegister} className="flex flex-col gap-3.5">
         {/* Full Name */}
         <div className="flex flex-col gap-1">
           <label className="text-[12px] font-semibold text-on-surface" htmlFor="fullname">
@@ -132,13 +163,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
               required
               value={fullname}
               onChange={(e) => setFullname(e.target.value)}
-              placeholder="e.g. Saif Sayyad"
+              placeholder="e.g. Your Name"
               className="w-full h-11 pl-10 pr-3 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm transition-all"
             />
           </div>
         </div>
 
-        {/* Email (No domain restriction) */}
+        {/* Email */}
         <div className="flex flex-col gap-1">
           <label className="text-[12px] font-semibold text-on-surface" htmlFor="email">
             Email Address
@@ -153,7 +184,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. saif.patil@email.com"
+              onBlur={() => {
+                if (email.trim()) checkEmailValidity(email);
+              }}
+              placeholder="e.g. yourname@nmiet.edu.in"
               className="w-full h-11 pl-10 pr-3 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm transition-all"
             />
           </div>
@@ -203,14 +237,20 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
             </span>
             <select
               id="academic-year"
+              required
               value={academicYear}
-              onChange={(e) => setAcademicYear(e.target.value)}
+              onChange={(e) => handleYearChange(e.target.value)}
               className="w-full h-11 pl-10 pr-8 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm appearance-none cursor-pointer"
             >
-              <option value="FE">First Year (FE)</option>
-              <option value="SE">Second Year (SE)</option>
-              <option value="TE">Third Year (TE)</option>
-              <option value="BE">Final Year (BE)</option>
+              <option value="" disabled>Select Year</option>
+              <option value="FE">FE</option>
+              <option value="SE">SE</option>
+              <option value="TE">TE</option>
+              <option value="BE">BE</option>
+              <option value="BCA">BCA</option>
+              <option value="MCA">MCA</option>
+              <option value="M.Tech">M.Tech</option>
+              <option value="B.Voc">B.Voc</option>
             </select>
             <span className="material-symbols-outlined absolute right-3 text-secondary pointer-events-none text-[18px]">
               expand_more
@@ -218,7 +258,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
           </div>
         </div>
 
-        {/* Academic Department */}
+        {/* Academic Department / Stream */}
         <div className="flex flex-col gap-1">
           <label className="text-[12px] font-semibold text-on-surface" htmlFor="department">
             Academic Department
@@ -229,16 +269,20 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
             </span>
             <select
               id="department"
+              required
               value={academicDept}
               onChange={(e) => setAcademicDept(e.target.value)}
               className="w-full h-11 pl-10 pr-8 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm appearance-none cursor-pointer"
             >
+              <option value="" disabled>Select Department</option>
               <option value="Computer Engineering">Computer Engineering</option>
-              <option value="AI & Data Science">AI & Data Science</option>
-              <option value="Information Technology">Information Technology</option>
+              <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+              <option value="E&TC">E&TC</option>
               <option value="Mechanical Engineering">Mechanical Engineering</option>
-              <option value="Electronics & Telecommunication">Electronics & Telecommunication</option>
-              <option value="Civil Engineering">Civil Engineering</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="AI & DS">AI & DS</option>
+              <option value="CSE (AI)">CSE (AI)</option>
+              <option value="Electronics & Computer Engineering">Electronics & Computer Engineering</option>
             </select>
             <span className="material-symbols-outlined absolute right-3 text-secondary pointer-events-none text-[18px]">
               expand_more
@@ -257,13 +301,20 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
             </span>
             <select
               id="division"
+              required
               value={division}
               onChange={(e) => setDivision(e.target.value)}
-              className="w-full h-11 pl-10 pr-8 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm appearance-none cursor-pointer"
+              disabled={!academicYear}
+              className="w-full h-11 pl-10 pr-8 rounded-xl bg-surface-container-lowest text-on-surface text-[14px] border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container shadow-sm appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="Div A">Div A</option>
-              <option value="Div B">Div B</option>
-              <option value="Div C">Div C</option>
+              <option value="" disabled>
+                {academicYear ? 'Select Division' : 'Select Year first'}
+              </option>
+              {getDivisionOptions().map((div) => (
+                <option key={div} value={div}>
+                  {div}
+                </option>
+              ))}
             </select>
             <span className="material-symbols-outlined absolute right-3 text-secondary pointer-events-none text-[18px]">
               expand_more
@@ -319,6 +370,49 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateLogin }) =
           </p>
         </div>
       </form>
+      </div>
+
+      {/* Official College Email Domain Restriction Popup Modal */}
+      {showDomainModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setShowDomainModal(false)}
+        >
+          <div
+            className="w-full max-w-md bg-surface-container-lowest rounded-2xl p-6 shadow-2xl border border-surface-container flex flex-col items-center text-center space-y-4 animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-14 h-14 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[32px]">school</span>
+            </div>
+
+            <div className="space-y-2.5">
+              <h3 className="text-[18px] font-bold text-on-surface">College Email Required</h3>
+              <p className="text-[14px] text-secondary leading-relaxed">
+                Only official NMIET college email addresses are accepted. Please enter your college email address ending in <strong className="text-primary font-semibold">@nmiet.edu.in</strong> to continue.
+              </p>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant text-[12px] font-mono mt-1 border border-surface-container-high">
+                <span className="text-secondary font-sans font-medium">Example:</span>
+                <span className="font-semibold text-primary">yourname@nmiet.edu.in</span>
+              </div>
+            </div>
+
+            <div className="w-full pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDomainModal(false);
+                  const input = document.getElementById('email');
+                  if (input) input.focus();
+                }}
+                className="w-full h-11 rounded-xl bg-primary text-on-primary font-semibold text-[14px] flex items-center justify-center gap-2 active:opacity-90 shadow-sm transition-all cursor-pointer"
+              >
+                <span>Enter @nmiet.edu.in Email</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

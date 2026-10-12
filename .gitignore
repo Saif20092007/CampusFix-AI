@@ -8,7 +8,6 @@ coverage/
 !.env.example
 
 # Python & SQLite artifacts
-.venv/
 __pycache__/
 *.pyc
 *.pyo
@@ -20,3 +19,10 @@ uploads/
 .antigravity/
 .agents/
 .vscode/
+campusfix.db
+backend/campusfix.db
+backend/uploads/
+data/
+.env
+.venv/
+

@@ -35,7 +35,7 @@ try {
 
   fastApiProcess = spawn(
     pythonCmd,
-    ['-m', 'uvicorn', 'main:app', '--app-dir', 'backend', '--host', '127.0.0.1', '--port', FASTAPI_PORT.toString()],
+    ['-m', 'uvicorn', 'main:app', '--app-dir', 'backend', '--host', '127.0.0.1', '--port', FASTAPI_PORT.toString(), '--reload'],
     { stdio: 'inherit', env: { ...process.env, PYTHONPATH: 'backend' } }
   );
 
@@ -113,7 +113,7 @@ async function startServer() {
     const vite = await createServer({
       server: {
         middlewareMode: true,
-        hmr: false,
+        hmr: true,
       },
       appType: 'spa',
     });

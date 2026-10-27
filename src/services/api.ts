@@ -7,6 +7,7 @@ import {
   AiAnalysisResponse,
   AnalyticsSummary,
   GrievanceAiSummary,
+  PublicTrackingGrievance,
 } from '../types';
 
 const TOKEN_KEY = 'campusfix_auth_token';
@@ -41,20 +42,27 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   });
 
   if (response.status === 401) {
-    removeStoredToken();
-    window.dispatchEvent(new Event('auth:unauthorized'));
-    throw new Error('Session expired. Please log in again.');
+    if (!endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+      removeStoredToken();
+      window.dispatchEvent(new Event('auth:unauthorized'));
+      throw new Error('Session expired. Please log in again.');
+    }
   }
 
   if (!response.ok) {
     let errorDetail = 'Request failed';
+    let errorCode = '';
     try {
       const data = await response.json();
       errorDetail = data.detail || data.error || errorDetail;
+      errorCode = data.code || '';
     } catch {
       errorDetail = response.statusText || errorDetail;
     }
-    throw new Error(errorDetail);
+    const err: any = new Error(errorDetail);
+    err.status = response.status;
+    err.code = errorCode;
+    throw err;
   }
 
   // Handle blob/download if needed, else json
@@ -80,9 +88,11 @@ export const api = {
     name: string;
     email: string;
     password: string;
+    role?: string;
     year?: string;
     academic_department?: string;
     division?: string;
+    designation?: string;
     phone?: string;
   }): Promise<{ token: string; user: User }> {
     const res = await request<{ token: string; user: User }>('/api/auth/register', {
@@ -239,5 +249,10 @@ export const api = {
   // Analytics
   async getAnalyticsSummary(): Promise<AnalyticsSummary> {
     return request<AnalyticsSummary>('/api/analytics/summary');
+  },
+
+  // Public Tracking (no auth token required)
+  async trackPublicGrievance(identifier: string): Promise<PublicTrackingGrievance> {
+    return request<PublicTrackingGrievance>(`/api/public/track/${encodeURIComponent(identifier.trim())}`);
   },
 };

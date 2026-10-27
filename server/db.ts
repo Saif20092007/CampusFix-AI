@@ -14,10 +14,10 @@ export interface User {
   email: string;
   password_hash: string;
   name: string;
-  role: 'STUDENT' | 'OFFICER' | 'GRIEVANCE_CELL' | 'ADMIN';
+  role: 'STUDENT' | 'TEACHER' | 'OFFICER' | 'GRIEVANCE_CELL' | 'ADMIN';
   college_id: number;
   department_id: number | null; // Staff only
-  academic_department: string | null; // Students only
+  academic_department: string | null; // Students & Teachers
   year: string | null;
   division: string | null;
   phone: string | null;
@@ -230,7 +230,7 @@ function getInitialDatabase(): DatabaseSchema {
     // NMIET Users
     {
       id: 1,
-      email: 'student@nmiet.demo',
+      email: 'student@nmiet.edu.in',
       password_hash: defaultPasswordHash,
       name: 'Mahesh Patil',
       role: 'STUDENT',
@@ -244,7 +244,7 @@ function getInitialDatabase(): DatabaseSchema {
     },
     {
       id: 2,
-      email: 'officer@nmiet.demo',
+      email: 'officer@nmiet.edu.in',
       password_hash: defaultPasswordHash,
       name: 'Anand Jadhav',
       role: 'OFFICER',
@@ -258,7 +258,7 @@ function getInitialDatabase(): DatabaseSchema {
     },
     {
       id: 3,
-      email: 'cell@nmiet.demo',
+      email: 'cell@nmiet.edu.in',
       password_hash: defaultPasswordHash,
       name: 'Sagar Gaikwad',
       role: 'GRIEVANCE_CELL',
@@ -272,7 +272,7 @@ function getInitialDatabase(): DatabaseSchema {
     },
     {
       id: 4,
-      email: 'it.officer@nmiet.demo',
+      email: 'it.officer@nmiet.edu.in',
       password_hash: defaultPasswordHash,
       name: 'R. K. Nair',
       role: 'OFFICER',
@@ -286,7 +286,7 @@ function getInitialDatabase(): DatabaseSchema {
     },
     {
       id: 5,
-      email: 'civil.officer@nmiet.demo',
+      email: 'civil.officer@nmiet.edu.in',
       password_hash: defaultPasswordHash,
       name: 'Sunil Gaikwad',
       role: 'OFFICER',
@@ -298,11 +298,25 @@ function getInitialDatabase(): DatabaseSchema {
       phone: '+91 98225 55667',
       created_at: '2024-10-01T08:00:00.000Z',
     },
+    {
+      id: 11,
+      email: 'teacher@nmiet.edu.in',
+      password_hash: defaultPasswordHash,
+      name: 'Prof. Rajesh Sharma',
+      role: 'TEACHER',
+      college_id: 1,
+      department_id: null,
+      academic_department: 'Computer Engineering',
+      year: null,
+      division: 'Assistant Professor',
+      phone: '+91 98229 99887',
+      created_at: '2024-10-01T08:00:00.000Z',
+    },
 
     // College B Users
     {
       id: 6,
-      email: 'student@collegeb.demo',
+      email: 'student@collegeb.edu.in',
       password_hash: defaultPasswordHash,
       name: 'Aarav Sharma',
       role: 'STUDENT',
@@ -316,7 +330,7 @@ function getInitialDatabase(): DatabaseSchema {
     },
     {
       id: 7,
-      email: 'officer@collegeb.demo',
+      email: 'officer@collegeb.edu.in',
       password_hash: defaultPasswordHash,
       name: 'Mahesh Deshmukh',
       role: 'OFFICER',
@@ -330,7 +344,7 @@ function getInitialDatabase(): DatabaseSchema {
     },
     {
       id: 8,
-      email: 'cell@collegeb.demo',
+      email: 'cell@collegeb.edu.in',
       password_hash: defaultPasswordHash,
       name: 'Prof. V. N. Patil',
       role: 'GRIEVANCE_CELL',

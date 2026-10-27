@@ -138,11 +138,36 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
             </button>
           </div>
 
+          {/* My Grievances Header Banner matching Screenshot 5 */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-700 via-indigo-800 to-purple-900 text-white p-5 sm:p-6 shadow-md border border-indigo-600/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="relative z-10 flex flex-col gap-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 backdrop-blur-md text-[11px] font-medium text-indigo-100 w-fit border border-white/20">
+                <span className="material-symbols-outlined text-[13px] text-amber-300">verified</span>
+                <span>NMIET Campus Portal</span>
+              </div>
+              <h2 className="text-[20px] sm:text-[24px] font-extrabold tracking-tight text-white">
+                My Grievances
+              </h2>
+              <span className="text-[12px] text-indigo-200">
+                {grievances.length} grievance(s) recorded
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onReportClick()}
+              className="relative z-10 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold text-[13px] flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/20 transition-all cursor-pointer shrink-0"
+            >
+              <span className="material-symbols-outlined text-[18px]">add_box</span>
+              <span>New Grievance</span>
+            </button>
+          </div>
+
           {/* Section Header with Segmented Filter Tabs */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-[17px] font-semibold text-on-surface">My Grievances</h3>
-              <span className="px-2 py-0.5 rounded-full bg-surface-container text-primary font-semibold text-[12px]">
+              <span className="text-[14px] font-bold text-on-surface">Filter Status</span>
+              <span className="px-2 py-0.5 rounded-full bg-surface-container text-primary font-semibold text-[11px]">
                 {activeCount} Active
               </span>
             </div>
@@ -293,27 +318,34 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                       </p>
                     </div>
 
-                    {/* Location, Department & Photos Pill */}
-                    <div className="flex items-center gap-3 text-[12px] text-secondary flex-wrap">
-                      {grievance.location && (
-                        <span className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[15px] text-primary">location_on</span>
-                          <span className="truncate max-w-[200px]">{grievance.location}</span>
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[15px] text-secondary">domain</span>
-                        <span>{grievance.department_name}</span>
-                      </span>
-                      {grievance.attachments && grievance.attachments.length > 0 && (
-                        <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">
-                          <span className="material-symbols-outlined text-[13px]">image</span>
-                          <span>
-                            {grievance.attachments.length}{' '}
-                            {grievance.attachments.length === 1 ? 'photo' : 'photos'}
+                    {/* Location, Department & Date with Chevron Right matching Screenshot 5 */}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-surface-container/60 text-[12px] text-secondary">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {grievance.location && (
+                          <span className="flex items-center gap-1 font-medium">
+                            <span className="material-symbols-outlined text-[15px] text-primary">location_on</span>
+                            <span className="truncate max-w-[180px]">{grievance.location}</span>
                           </span>
+                        )}
+                        <span>&middot;</span>
+                        <span className="text-[11px] font-mono text-secondary">
+                          {new Date(grievance.created_at).toLocaleDateString([], {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                          })}
                         </span>
-                      )}
+                        {grievance.attachments && grievance.attachments.length > 0 && (
+                          <span className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">
+                            <span className="material-symbols-outlined text-[13px]">image</span>
+                            <span>{grievance.attachments.length}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <span className="material-symbols-outlined text-[20px] text-secondary group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0">
+                        chevron_right
+                      </span>
                     </div>
 
                     {/* Resolved Resolution Note Banner (if available) */}

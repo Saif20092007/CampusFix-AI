@@ -7,10 +7,13 @@ class UserRegister(BaseModel):
     name: str
     email: str
     password: str
+    role: Optional[str] = "STUDENT"
     year: Optional[str] = "TE"
     academic_department: Optional[str] = "Computer Engineering"
     division: Optional[str] = "Div B"
+    roll_no: Optional[str] = None
     phone: Optional[str] = None
+    designation: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: str
@@ -232,3 +235,32 @@ class GrievanceAiSummaryOut(BaseModel):
     recommendedAction: str
     model: str
     generatedAt: str
+
+# --- Public Tracking Schemas ---
+class PublicTimelineItemOut(BaseModel):
+    id: int
+    status: Optional[str] = None
+    kind: str
+    note: str
+    actor_role: str
+    created_at: datetime
+
+class PublicTrackingOut(BaseModel):
+    id: int
+    public_id: str
+    display_no: str
+    college_id: int
+    college_name: Optional[str] = None
+    description: str
+    summary: str
+    category_name: str
+    department_name: str
+    priority: str
+    location: str
+    status: str
+    due_at: datetime
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+    resolution_note: Optional[str] = None
+    sla: SlaStatusOut
+    timeline: List[PublicTimelineItemOut] = []

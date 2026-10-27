@@ -49,7 +49,7 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
   }
 }
 
-export function requireRole(allowedRoles: ('STUDENT' | 'OFFICER' | 'GRIEVANCE_CELL' | 'ADMIN')[]) {
+export function requireRole(allowedRoles: ('STUDENT' | 'TEACHER' | 'OFFICER' | 'GRIEVANCE_CELL' | 'ADMIN')[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Unauthorized', detail: 'Authentication required' });

@@ -18,7 +18,8 @@ from app.schemas import (
     GrievanceDetailOut, GrievanceListResponse, GrievanceStatusUpdate,
     GrievanceEscalate, GrievanceAssign, GrievancePriorityUpdate,
     GrievanceRemarkCreate, StatusHistoryOut, AttachmentInfo,
-    StudentOfficerSummary, StudentCellSummary, GrievanceAiSummaryOut
+    StudentOfficerSummary, StudentCellSummary, GrievanceAiSummaryOut,
+    PublicTimelineItemOut, PublicTrackingOut
 )
 from app.auth import get_current_user, require_role, analyze_rate_limiter
 from app.services.scoping import scope_grievances_query, get_scoped_grievance, verify_attachment_access
@@ -64,10 +65,10 @@ def build_grievance_out(g: Grievance, current_user: User, db: Session) -> Grieva
         assigned_to_id=g.assigned_to_id,
         assigned_to_name=g.assigned_to_name,
         resolution_note=g.resolution_note,
-        student_id=g.student_id if current_user.role != "STUDENT" else None,
+        student_id=g.student_id if current_user.role not in ["STUDENT", "TEACHER"] else None,
         student_name=student_name,
-        student_year=student.year if current_user.role != "STUDENT" and student else None,
-        student_academic_dept=student.academic_department if current_user.role != "STUDENT" and student else None,
+        student_year=student.year if current_user.role not in ["STUDENT", "TEACHER"] and student else None,
+        student_academic_dept=student.academic_department if current_user.role not in ["STUDENT", "TEACHER"] and student else None,
         student_division=student.division if current_user.role in ["GRIEVANCE_CELL", "ADMIN"] and student else None,
         student_phone=student.phone if current_user.role in ["GRIEVANCE_CELL", "ADMIN"] and student else None,
         sla=sla,
@@ -393,6 +394,110 @@ def get_grievances(
         items=paginated_items
     )
 
+# --- Public Grievance Tracking (No Login Required) ---
+@router.get("/public/track/{identifier}", response_model=PublicTrackingOut)
+@router.get("/grievances/track/{identifier}", response_model=PublicTrackingOut)
+def track_public_grievance(
+    identifier: str,
+    db: Session = Depends(get_db)
+):
+    raw_id = identifier.strip()
+    if not raw_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ticket reference or tracking ID is required."
+        )
+
+    clean = raw_id.lower()
+    digits = "".join(filter(str.isdigit, clean))
+
+    # Match in DB: public_id, display_no, or numeric ID
+    grievances = db.query(Grievance).all()
+    matched = None
+
+    is_pure_digits = clean.isdigit()
+
+    for g in grievances:
+        pub_id = (g.public_id or "").lower()
+        disp_no = (g.display_no or "").lower()
+        g_digits = "".join(filter(str.isdigit, disp_no))
+
+        # 1. Exact numeric ID match (e.g. searching "4" matches Ticket #4)
+        if is_pure_digits and g.id == int(clean):
+            matched = g
+            break
+
+        # 2. Exact match on public_id or display_no
+        if pub_id == clean or disp_no == clean:
+            matched = g
+            break
+
+        # 3. Consistency alias across Express & FastAPI demo datasets (CF-00092 <-> id: 4)
+        if g.id == 4 and clean in ["cf-00092", "cf-00092-nmiet-2e1f", "00092", "092"]:
+            matched = g
+            break
+
+        # 4. Multi-digit suffix match (e.g. "104", "00104")
+        if is_pure_digits and len(digits) >= 3 and (g_digits == digits or g_digits.endswith(digits)):
+            matched = g
+            break
+
+        # 5. Substring / partial match only for non-pure digits or longer queries
+        if not is_pure_digits and len(clean) >= 3 and (clean in pub_id or clean in disp_no):
+            matched = g
+            break
+
+    if not matched:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No grievance found matching reference '{raw_id}'. Please verify the ticket or tracking ID."
+        )
+
+    cat = db.query(Category).filter(Category.id == matched.category_id).first()
+    dept = db.query(Department).filter(Department.id == matched.department_id).first()
+    college = db.query(College).filter(College.id == matched.college_id).first()
+    sla_info = calculate_sla(matched)
+
+    # Privacy filtering: public updates only, hide internal remarks and student identity
+    history = db.query(StatusHistory).filter(
+        StatusHistory.grievance_id == matched.id,
+        StatusHistory.is_public == True,
+        StatusHistory.kind != "INTERNAL_REMARK"
+    ).order_by(StatusHistory.created_at.asc()).all()
+
+    timeline_out = [
+        PublicTimelineItemOut(
+            id=h.id,
+            status=h.status,
+            kind=h.kind,
+            note=h.note,
+            actor_role="Student" if h.actor_role == "STUDENT" else "Campus Administration",
+            created_at=h.created_at
+        )
+        for h in history
+    ]
+
+    return PublicTrackingOut(
+        id=matched.id,
+        public_id=matched.public_id,
+        display_no=matched.display_no,
+        college_id=matched.college_id,
+        college_name=college.display_name if college else "College Campus",
+        description=matched.description,
+        summary=matched.summary,
+        category_name=cat.name if cat else "General Maintenance",
+        department_name=dept.name if dept else "Campus Operations",
+        priority=matched.priority,
+        location=matched.location,
+        status=matched.status,
+        due_at=matched.due_at,
+        created_at=matched.created_at,
+        resolved_at=matched.resolved_at,
+        resolution_note=matched.resolution_note,
+        sla=sla_info,
+        timeline=timeline_out
+    )
+
 # --- Get Single Grievance Detail ---
 @router.get("/grievances/{public_id}", response_model=GrievanceDetailOut)
 def get_grievance_detail(
@@ -406,8 +511,8 @@ def get_grievance_detail(
     # Timeline history
     history_query = db.query(StatusHistory).filter(StatusHistory.grievance_id == grievance.id)
 
-    # Privacy rule: Students NEVER receive internal remarks or hidden escalation notes
-    if current_user.role == "STUDENT":
+    # Privacy rule: Complainants (Students & Teachers) NEVER receive internal remarks or hidden escalation notes
+    if current_user.role in ["STUDENT", "TEACHER"]:
         history_query = history_query.filter(StatusHistory.is_public == True)
 
     history = history_query.order_by(StatusHistory.created_at.asc()).all()
@@ -478,11 +583,11 @@ def update_status(
 ):
     grievance = get_scoped_grievance(public_id, current_user, db)
 
-    # Students cannot change status (403)
-    if current_user.role == "STUDENT":
+    # Complainants cannot change status (403)
+    if current_user.role in ["STUDENT", "TEACHER"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Students cannot update grievance status"
+            detail="Complainants cannot update grievance status"
         )
 
     # Department officers cannot modify ESCALATED grievance
@@ -574,10 +679,10 @@ def escalate_grievance(
 ):
     grievance = get_scoped_grievance(public_id, current_user, db)
 
-    if current_user.role == "STUDENT":
+    if current_user.role in ["STUDENT", "TEACHER"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Students cannot escalate grievance records"
+            detail="Complainants cannot escalate grievance records"
         )
 
     if not payload.reason or not payload.reason.strip():
@@ -716,10 +821,10 @@ def update_priority(
 ):
     grievance = get_scoped_grievance(public_id, current_user, db)
 
-    if current_user.role == "STUDENT":
+    if current_user.role in ["STUDENT", "TEACHER"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Students cannot adjust complaint priority"
+            detail="Complainants cannot adjust complaint priority"
         )
 
     valid_priorities = ["Critical", "High", "Medium", "Low"]
@@ -772,13 +877,13 @@ def add_remark(
 
     now = datetime.utcnow()
 
-    # Students always post PUBLIC_UPDATE
-    if current_user.role == "STUDENT":
+    # Complainants always post PUBLIC_UPDATE
+    if current_user.role in ["STUDENT", "TEACHER"]:
         history = StatusHistory(
             grievance_id=grievance.id,
             actor_id=current_user.id,
             actor_name=current_user.name,
-            actor_role="STUDENT",
+            actor_role=current_user.role,
             status=None,
             kind="PUBLIC_UPDATE",
             note=payload.note.strip(),

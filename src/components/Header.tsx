@@ -27,8 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateAnalytics,
   onNavigateReport,
 }) => {
-  const { user, logout, switchDemoUser, theme, setTheme } = useAuth();
-  const [showDemoMenu, setShowDemoMenu] = useState(false);
+  const { user, logout, theme, setTheme } = useAuth();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -84,71 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* PWA Install Button */}
             <PWAInstallButton />
 
-            {/* Quick Demo Switcher Pill (Desktop) */}
-            <div className="relative hidden sm:block">
-              <button
-                type="button"
-                onClick={() => setShowDemoMenu(!showDemoMenu)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-surface-container hover:bg-surface-container-high text-[11px] font-semibold text-primary transition-all active:scale-95 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[15px]">switch_account</span>
-                <span>Demo</span>
-                <span className="material-symbols-outlined text-[13px]">arrow_drop_down</span>
-              </button>
 
-              {showDemoMenu && (
-                <div className="absolute right-0 top-12 w-60 rounded-xl bg-surface-container-lowest p-2 shadow-xl border border-surface-container-high z-50 flex flex-col gap-1 text-[13px] animate-fade-in">
-                  <div className="px-2 py-1 text-[11px] font-semibold text-secondary uppercase tracking-wider">
-                    Select Demo Account
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchDemoUser('student@nmiet.demo');
-                      setShowDemoMenu(false);
-                    }}
-                    className={`text-left px-2.5 py-2 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between cursor-pointer ${
-                      user?.email === 'student@nmiet.demo'
-                        ? 'bg-primary-container text-on-primary font-semibold'
-                        : 'text-on-surface'
-                    }`}
-                  >
-                    <span>As Student</span>
-                    <span className="text-[10px] opacity-75">Mahesh Patil</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchDemoUser('officer@nmiet.demo');
-                      setShowDemoMenu(false);
-                    }}
-                    className={`text-left px-2.5 py-2 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between cursor-pointer ${
-                      user?.email === 'officer@nmiet.demo'
-                        ? 'bg-primary-container text-on-primary font-semibold'
-                        : 'text-on-surface'
-                    }`}
-                  >
-                    <span>As HOD</span>
-                    <span className="text-[10px] opacity-75">Anand Jadhav</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchDemoUser('cell@nmiet.demo');
-                      setShowDemoMenu(false);
-                    }}
-                    className={`text-left px-2.5 py-2 rounded-lg hover:bg-surface-container transition-colors flex items-center justify-between cursor-pointer ${
-                      user?.email === 'cell@nmiet.demo'
-                        ? 'bg-primary-container text-on-primary font-semibold'
-                        : 'text-on-surface'
-                    }`}
-                  >
-                    <span>As Grievance Cell</span>
-                    <span className="text-[10px] opacity-75">Sagar Gaikwad</span>
-                  </button>
-                </div>
-              )}
-            </div>
 
             {/* Theme Toggle (Desktop) */}
             <button
@@ -243,7 +178,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="flex flex-col min-w-0 flex-1">
                     <span className="font-bold text-[14px] text-on-surface truncate">{user.name}</span>
                     <span className="text-[11px] font-semibold text-primary">
-                      {user.role === 'STUDENT' ? 'Student' : user.role === 'OFFICER' ? 'HOD' : 'Grievance Cell'}
+                      {user.role === 'STUDENT' ? 'Student' : user.role === 'TEACHER' ? 'Teacher / Faculty' : user.role === 'OFFICER' ? 'HOD' : 'Grievance Cell'}
                     </span>
                     <a
                       href={`mailto:${user.email}`}
@@ -320,59 +255,7 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </nav>
 
-              {/* Demo Account Switcher on Mobile */}
-              <div className="pt-3 border-t border-surface-container flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-secondary px-3">
-                  Quick Demo Switch
-                </span>
-                <div className="grid grid-cols-1 gap-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchDemoUser('student@nmiet.demo');
-                      setShowMobileMenu(false);
-                    }}
-                    className={`px-3 py-2 rounded-xl text-[12px] flex items-center justify-between transition-colors cursor-pointer ${
-                      user?.email === 'student@nmiet.demo'
-                        ? 'bg-primary-container text-on-primary font-bold'
-                        : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
-                    }`}
-                  >
-                    <span>As Student</span>
-                    <span className="opacity-75 font-mono text-[11px]">Mahesh Patil</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchDemoUser('officer@nmiet.demo');
-                      setShowMobileMenu(false);
-                    }}
-                    className={`px-3 py-2 rounded-xl text-[12px] flex items-center justify-between transition-colors cursor-pointer ${
-                      user?.email === 'officer@nmiet.demo'
-                        ? 'bg-primary-container text-on-primary font-bold'
-                        : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
-                    }`}
-                  >
-                    <span>As HOD</span>
-                    <span className="opacity-75 font-mono text-[11px]">Anand Jadhav</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchDemoUser('cell@nmiet.demo');
-                      setShowMobileMenu(false);
-                    }}
-                    className={`px-3 py-2 rounded-xl text-[12px] flex items-center justify-between transition-colors cursor-pointer ${
-                      user?.email === 'cell@nmiet.demo'
-                        ? 'bg-primary-container text-on-primary font-bold'
-                        : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
-                    }`}
-                  >
-                    <span>As Grievance Cell</span>
-                    <span className="opacity-75 font-mono text-[11px]">Sagar Gaikwad</span>
-                  </button>
-                </div>
-              </div>
+
             </div>
 
             {/* Bottom of drawer: Contacts, theme, logout */}

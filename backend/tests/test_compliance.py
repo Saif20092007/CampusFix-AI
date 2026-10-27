@@ -37,10 +37,15 @@ def setup_database():
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
 
-    # Clear any existing data
+    # Clear any existing data and rate limiter state
     for table in reversed(Base.metadata.sorted_tables):
         db.execute(table.delete())
     db.commit()
+
+    from app.auth import login_rate_limiter, register_rate_limiter, analyze_rate_limiter
+    login_rate_limiter.history.clear()
+    register_rate_limiter.history.clear()
+    analyze_rate_limiter.history.clear()
 
     # Run seeding logic on test db
     # 1. Colleges
@@ -319,3 +324,55 @@ def test_27_resolved_sla_is_resolved_on_time_or_late():
     assert sla.status in ["RESOLVED_ON_TIME", "RESOLVED_LATE"]
     assert sla.is_overdue is False
     db.close()
+
+def test_28_public_tracking_without_login_works():
+    # Public tracking must work without any Authorization header
+    res = client.get("/api/public/track/CF-00104")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["display_no"] == "CF-00104"
+    assert "status" in data
+    assert "priority" in data
+    assert "sla" in data
+    # Ensure sensitive student credentials are never leaked
+    assert "student_email" not in data
+    assert "student_phone" not in data
+
+    # Numeric reference lookup (e.g. ticket #4)
+    res_num = client.get("/api/public/track/4")
+    assert res_num.status_code == 200
+    assert res_num.json()["id"] == 4
+
+    # Non-existent ticket returns 404
+    res_404 = client.get("/api/public/track/non-existent-99999")
+    assert res_404.status_code == 404
+
+def test_29_unregistered_user_login_prompts_registration():
+    # When an unregistered user tries to log in, return 404 with registration instruction
+    res = client.post("/api/auth/login", json={
+        "email": "unregistered.faculty@nmiet.demo",
+        "password": "somepassword123"
+    })
+    assert res.status_code == 404
+    assert "register" in res.json()["detail"].lower()
+
+def test_30_teacher_registration_and_scoping():
+    # Teacher registration with TEACHER role
+    res = client.post("/api/auth/register", json={
+        "name": "Prof. Rajesh Sharma",
+        "email": "rajesh.sharma@nmiet.demo",
+        "password": "password123",
+        "role": "TEACHER",
+        "academic_department": "Computer Engineering",
+        "designation": "Assistant Professor"
+    })
+    assert res.status_code == 201
+    user_data = res.json()["user"]
+    assert user_data["role"] == "TEACHER"
+    assert user_data["academic_department"] == "Computer Engineering"
+    token = res.json()["token"]
+
+    # Teacher should see only their own grievances (currently 0 for this new teacher)
+    res_list = client.get("/api/grievances", headers={"Authorization": f"Bearer {token}"})
+    assert res_list.status_code == 200
+    assert res_list.json()["total"] == 0

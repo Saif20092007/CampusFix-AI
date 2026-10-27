@@ -10,7 +10,7 @@ def scope_grievances_query(user: User, db: Session) -> Query:
     """
     query = db.query(Grievance).filter(Grievance.college_id == user.college_id)
 
-    if user.role == "STUDENT":
+    if user.role in ["STUDENT", "TEACHER"]:
         query = query.filter(Grievance.student_id == user.id)
     elif user.role == "OFFICER":
         query = query.filter(Grievance.department_id == user.department_id)
@@ -35,7 +35,7 @@ def get_scoped_grievance(public_id: str, user: User, db: Session) -> Grievance:
         )
 
     # Check role boundaries
-    if user.role == "STUDENT" and grievance.student_id != user.id:
+    if user.role in ["STUDENT", "TEACHER"] and grievance.student_id != user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Complaint not found."
@@ -57,7 +57,7 @@ def verify_attachment_access(attachment: ComplaintAttachment, grievance: Grievan
     if grievance.college_id != user.college_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found.")
 
-    if user.role == "STUDENT" and grievance.student_id != user.id:
+    if user.role in ["STUDENT", "TEACHER"] and grievance.student_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found.")
 
     if user.role == "OFFICER" and grievance.department_id != user.department_id:

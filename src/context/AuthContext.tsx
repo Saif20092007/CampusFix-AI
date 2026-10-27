@@ -11,7 +11,7 @@ interface AuthContextType {
   register: (data: any) => Promise<void>;
   loginWithGoogle: (data: { email: string; name?: string }) => Promise<void>;
   logout: () => void;
-  switchDemoUser: (email: string) => Promise<void>;
+
   refreshUser: () => Promise<void>;
 }
 
@@ -106,15 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
-  const switchDemoUser = async (email: string) => {
-    setIsLoading(true);
-    try {
-      const res = await api.login(email, 'campus123');
-      setUser(res.user);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
 
   return (
     <AuthContext.Provider
@@ -127,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         loginWithGoogle,
         logout,
-        switchDemoUser,
+
         refreshUser,
       }}
     >

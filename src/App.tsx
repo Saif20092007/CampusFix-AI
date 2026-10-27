@@ -18,16 +18,21 @@ import { OfficerDashboard } from './pages/OfficerDashboard';
 import { OfficerTicketDetail } from './pages/OfficerTicketDetail';
 import { GrievanceCellTicketDetail } from './pages/GrievanceCellTicketDetail';
 import { AnalyticsPage } from './pages/AnalyticsPage';
+import { PublicLandingPage } from './pages/PublicLandingPage';
+import { PublicTrackingPage } from './pages/PublicTrackingPage';
 import { api } from './services/api';
 import { AiAnalysisResponse, Grievance, NotificationItem } from './types';
 import { UploadedFileState } from './components/PhotoUploader';
-import { TopLeftDemoButton } from './components/TopLeftDemoButton';
+
 
 function MainApp() {
   const { user, isLoading } = useAuth();
 
   // Navigation State
-  const [authView, setAuthView] = useState<'signin' | 'register'>('signin');
+  const [authView, setAuthView] = useState<'landing' | 'signin' | 'register' | 'track'>('landing');
+  const [trackingTicketId, setTrackingTicketId] = useState<string | undefined>();
+  const [prefilledRegisterEmail, setPrefilledRegisterEmail] = useState('');
+  const [prefilledRegisterRole, setPrefilledRegisterRole] = useState<'STUDENT' | 'TEACHER'>('STUDENT');
   const [studentTab, setStudentTab] = useState<'home' | 'report' | 'alerts' | 'profile'>('home');
 
   // Report Flow State
@@ -63,9 +68,13 @@ function MainApp() {
   useEffect(() => {
     if (!user) {
       document.title =
-        authView === 'signin'
+        authView === 'landing'
+          ? 'CampusFix AI — College Grievance Management'
+          : authView === 'signin'
           ? 'Sign In | CampusFix AI — College Grievance Management'
-          : 'Register Student Account | CampusFix AI';
+          : authView === 'register'
+          ? 'Register Student or Teacher Account | CampusFix AI'
+          : 'Track Complaint Live | CampusFix AI';
       return;
     }
     if (isNotFound) {
@@ -84,6 +93,8 @@ function MainApp() {
       document.title =
         user.role === 'STUDENT'
           ? 'Student Portal | CampusFix AI'
+          : user.role === 'TEACHER'
+          ? 'Faculty Portal | CampusFix AI'
           : user.role === 'OFFICER'
           ? 'HOD Department Queue | CampusFix AI'
           : 'Central Grievance Triage | CampusFix AI';
@@ -119,11 +130,40 @@ function MainApp() {
   if (!user) {
     return (
       <div className="min-h-screen bg-surface text-on-surface flex flex-col relative overflow-x-hidden">
-        <TopLeftDemoButton />
-        {authView === 'signin' ? (
-          <SignInPage onNavigateRegister={() => setAuthView('register')} />
+        {authView === 'landing' ? (
+          <PublicLandingPage
+            onLodgeGrievance={() => setAuthView('signin')}
+            onTrackGrievance={(ref) => {
+              setTrackingTicketId(ref);
+              setAuthView('track');
+            }}
+            onDepartmentLogin={() => setAuthView('signin')}
+          />
+        ) : authView === 'signin' ? (
+            <SignInPage
+              onNavigateRegister={(email?: string, role?: 'STUDENT' | 'TEACHER') => {
+                if (email) setPrefilledRegisterEmail(email);
+                if (role) setPrefilledRegisterRole(role);
+                setAuthView('register');
+              }}
+              onNavigateTrack={(ref) => {
+                setTrackingTicketId(ref);
+                setAuthView('track');
+              }}
+              onNavigateHome={() => setAuthView('landing')}
+            />
+        ) : authView === 'register' ? (
+            <RegisterPage
+              initialEmail={prefilledRegisterEmail}
+              initialRole={prefilledRegisterRole}
+              onNavigateLogin={() => setAuthView('signin')}
+            />
         ) : (
-          <RegisterPage onNavigateLogin={() => setAuthView('signin')} />
+          <PublicTrackingPage
+            initialTicketId={trackingTicketId}
+            onNavigateLogin={() => setAuthView('signin')}
+            onNavigateRegister={() => setAuthView('register')}
+          />
         )}
         <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       </div>
@@ -208,7 +248,7 @@ function MainApp() {
           setSelectedGrievanceId(null);
           setShowAnalytics(true);
         }}
-        onNavigateReport={user.role === 'STUDENT' ? () => handleStartReport() : undefined}
+        onNavigateReport={(user.role === 'STUDENT' || user.role === 'TEACHER') ? () => handleStartReport() : undefined}
       />
 
       {/* Main Content Area */}
@@ -217,12 +257,12 @@ function MainApp() {
         {isNotFound ? (
           <NotFoundPage
             onReturnHome={handleReturnHome}
-            onReportIssue={user.role === 'STUDENT' ? () => handleStartReport() : undefined}
+            onReportIssue={(user.role === 'STUDENT' || user.role === 'TEACHER') ? () => handleStartReport() : undefined}
           />
         ) : (
           <>
-            {/* STUDENT FLOW */}
-            {user.role === 'STUDENT' && (
+            {/* STUDENT & TEACHER COMPLAINANT FLOW */}
+            {(user.role === 'STUDENT' || user.role === 'TEACHER') && (
               <>
                 {/* If inspecting a specific grievance */}
                 {selectedGrievanceId ? (

@@ -39,7 +39,13 @@ export const ProfilePage: React.FC = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-[19px] font-bold text-on-surface truncate">{user.name}</h2>
             <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-semibold">
-              {user.role === 'GRIEVANCE_CELL' ? 'Grievance Cell' : user.role === 'OFFICER' ? 'HOD' : 'Student'}
+              {user.role === 'GRIEVANCE_CELL'
+                ? 'Grievance Cell'
+                : user.role === 'OFFICER'
+                ? 'HOD'
+                : user.role === 'TEACHER'
+                ? 'Teacher / Faculty'
+                : 'Student'}
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-3 mt-1">
@@ -65,8 +71,8 @@ export const ProfilePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Student Grievance Stats Strip (Student only) */}
-      {user.role === 'STUDENT' && (
+      {/* Complainant Grievance Stats Strip (Student & Teacher) */}
+      {(user.role === 'STUDENT' || user.role === 'TEACHER') && (
         <div className="grid grid-cols-3 gap-2.5">
           <div className="p-3 rounded-xl bg-surface-container-lowest border border-surface-container text-center shadow-sm">
             <span className="text-[11px] text-secondary block font-medium">Lodged</span>
@@ -83,11 +89,17 @@ export const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* Academic / Staff Details (No Roll Number) */}
+      {/* Academic / Faculty / Staff Details */}
       <div className="bg-surface-container-lowest rounded-2xl p-5 shadow-sm border border-surface-container space-y-3.5">
         <h3 className="text-[14px] font-semibold text-on-surface border-b border-surface-container pb-2 flex items-center gap-1.5">
           <span className="material-symbols-outlined text-primary text-[18px]">badge</span>
-          <span>{user.role === 'STUDENT' ? 'Academic Registry Profile' : 'Staff Assignment'}</span>
+          <span>
+            {user.role === 'STUDENT'
+              ? 'Academic Registry Profile'
+              : user.role === 'TEACHER'
+              ? 'Faculty Registry Profile'
+              : 'Staff Assignment'}
+          </span>
         </h3>
 
         <div className="grid grid-cols-2 gap-3 text-[13px]">
@@ -108,6 +120,25 @@ export const ProfilePage: React.FC = () => {
               <div>
                 <span className="text-[11px] text-secondary block font-medium">Portal Status</span>
                 <span className="font-semibold text-primary mt-0.5 block">Active Student</span>
+              </div>
+            </>
+          ) : user.role === 'TEACHER' ? (
+            <>
+              <div>
+                <span className="text-[11px] text-secondary block font-medium">Academic Department</span>
+                <span className="font-semibold text-on-surface mt-0.5 block">{user.academic_department || 'Computer Engineering'}</span>
+              </div>
+              <div>
+                <span className="text-[11px] text-secondary block font-medium">Designation / Role</span>
+                <span className="font-semibold text-on-surface mt-0.5 block">{user.division || 'Assistant Professor'}</span>
+              </div>
+              <div>
+                <span className="text-[11px] text-secondary block font-medium">Institution</span>
+                <span className="font-semibold text-on-surface mt-0.5 block">{user.college_display_name || 'NMIET Pune'}</span>
+              </div>
+              <div>
+                <span className="text-[11px] text-secondary block font-medium">Portal Status</span>
+                <span className="font-semibold text-primary mt-0.5 block">Active Faculty</span>
               </div>
             </>
           ) : (

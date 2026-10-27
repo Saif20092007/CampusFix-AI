@@ -72,7 +72,7 @@ router.post('/auth/register', (req, res) => {
     return;
   }
 
-  const { name, email, password, year, academic_department, division, phone } = req.body;
+  const { name, email, password, year, academic_department, division, phone, role, designation } = req.body;
 
   if (!name || !email || !password) {
     res.status(422).json({ error: 'Validation Error', detail: 'Name, email and password are required' });
@@ -101,19 +101,22 @@ router.post('/auth/register', (req, res) => {
   const defaultCollegeName = process.env.DEFAULT_REGISTRATION_COLLEGE || 'NMIET';
   const college = db.colleges.find(c => c.display_name === defaultCollegeName) || db.colleges[0];
 
-  // Self-registered users are ALWAYS STUDENT (ignore role, college_id, department_id from client)
+  // Self-registered user can be STUDENT or TEACHER (privilege escalation to ADMIN/OFFICER safely falls back to STUDENT)
+  const cleanRole = typeof role === 'string' ? role.trim().toUpperCase() : 'STUDENT';
+  const assignedRole: 'STUDENT' | 'TEACHER' = cleanRole === 'TEACHER' ? 'TEACHER' : 'STUDENT';
+
   db.counters.user_id += 1;
   const newUser: User = {
     id: db.counters.user_id,
     email: normalizedEmail,
     password_hash: hashPassword(password),
     name: name.trim(),
-    role: 'STUDENT',
+    role: assignedRole,
     college_id: college.id,
     department_id: null, // Service department is for staff only
     academic_department: academic_department?.trim() || 'Computer Engineering',
-    year: year?.trim() || 'TE',
-    division: division?.trim() || 'Div B',
+    year: assignedRole === 'TEACHER' ? null : (year?.trim() || 'TE'),
+    division: designation?.trim() || (assignedRole === 'TEACHER' ? 'Faculty' : (division?.trim() || 'Div B')),
     phone: phone?.trim() || '',
     created_at: new Date().toISOString(),
   };
@@ -149,7 +152,7 @@ router.post('/auth/login', (req, res) => {
   const normalizedEmail = (typeof email === 'string' ? email : '').trim().toLowerCase();
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
   const parts = normalizedEmail.split('@');
-  const isAllowedDomain = emailRegex.test(normalizedEmail) && parts.length === 2 && (parts[1] === 'nmiet.edu.in' || parts[1] === 'nmiet.demo');
+  const isAllowedDomain = emailRegex.test(normalizedEmail) && parts.length === 2 && parts[1] === 'nmiet.edu.in';
   if (!isAllowedDomain) {
     res.status(401).json({
       error: 'Unauthorized',
@@ -167,7 +170,15 @@ router.post('/auth/login', (req, res) => {
     (u.id === 4 && normalizedEmail === 'it.officer@nmiet.edu.in') ||
     (u.id === 5 && normalizedEmail === 'civil.officer@nmiet.edu.in')
   );
-  if (!user || !verifyPassword(password, user.password_hash)) {
+  if (!user) {
+    res.status(404).json({
+      error: 'Not Found',
+      code: 'USER_NOT_REGISTERED',
+      detail: 'No account found with this email. Please register first.'
+    });
+    return;
+  }
+  if (!verifyPassword(password, user.password_hash)) {
     res.status(401).json({ error: 'Unauthorized', detail: 'Invalid college email or password' });
     return;
   }
@@ -198,7 +209,7 @@ router.post('/auth/google', (req, res) => {
   const normalizedEmail = (typeof email === 'string' ? email : '').trim().toLowerCase();
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
   const parts = normalizedEmail.split('@');
-  const isAllowedDomain = emailRegex.test(normalizedEmail) && parts.length === 2 && (parts[1] === 'nmiet.edu.in' || parts[1] === 'nmiet.demo');
+  const isAllowedDomain = emailRegex.test(normalizedEmail) && parts.length === 2 && parts[1] === 'nmiet.edu.in';
   if (!isAllowedDomain) {
     res.status(401).json({
       error: 'Unauthorized',
@@ -691,6 +702,98 @@ router.get('/grievances', requireAuth, (req: AuthenticatedRequest, res) => {
     limit,
     offset,
     items: paginated,
+  });
+});
+
+// ==========================================
+// 6.5 PUBLIC GRIEVANCE TRACKING (NO LOGIN REQUIRED)
+// ==========================================
+
+router.get(['/public/track/:identifier', '/grievances/track/:identifier'], (req, res) => {
+  const rawId = req.params.identifier ? req.params.identifier.trim() : '';
+  if (!rawId) {
+    res.status(400).json({ error: 'Bad Request', detail: 'Ticket reference or tracking ID is required.' });
+    return;
+  }
+
+  const clean = rawId.toLowerCase();
+  const digits = clean.replace(/[^0-9]/g, '');
+  const db = loadDatabase();
+
+  const isPureDigits = /^\d+$/.test(clean);
+
+  const grievance = db.grievances.find(g => {
+    const pubId = (g.public_id || '').toLowerCase();
+    const dispNo = (g.display_no || '').toLowerCase();
+    const gDigits = dispNo.replace(/[^0-9]/g, '');
+
+    // 1. Exact numeric ID match (e.g. searching "4" matches Ticket #4)
+    if (isPureDigits && g.id === parseInt(clean, 10)) return true;
+
+    // 2. Exact match on public_id or display_no
+    if (pubId === clean || dispNo === clean) return true;
+
+    // 3. Consistency alias across Express & FastAPI demo datasets (CF-00104 <-> id: 4)
+    if (g.id === 4 && (clean === 'cf-00104' || clean === 'cf-demo-nmiet-004' || clean === '104')) return true;
+
+    // 4. Exact display number numeric suffix match (e.g. "00124", "124", "00092")
+    if (isPureDigits && digits.length >= 3) {
+      if (gDigits === digits || gDigits.endsWith(digits)) return true;
+    }
+
+    // 5. Substring / partial match only for non-pure digits or longer queries
+    if (!isPureDigits && clean.length >= 3) {
+      if (pubId.includes(clean) || dispNo.includes(clean)) return true;
+    }
+
+    return false;
+  });
+
+  if (!grievance) {
+    res.status(404).json({
+      error: 'Not Found',
+      detail: `No grievance found matching reference '${rawId}'. Please verify the ticket or tracking ID.`,
+    });
+    return;
+  }
+
+  const college = db.colleges.find(c => c.id === grievance.college_id);
+  const cat = db.categories.find(c => c.id === grievance.category_id);
+  const dept = db.departments.find(d => d.id === grievance.department_id);
+  const sla = calculateSla(grievance);
+
+  // Status history: strictly filter to public updates only (protect privacy)
+  const history = db.status_history
+    .filter(h => h.grievance_id === grievance.id && h.is_public && h.kind !== 'INTERNAL_REMARK')
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .map(h => ({
+      id: h.id,
+      status: h.status,
+      kind: h.kind,
+      note: h.note,
+      actor_role: h.actor_role === 'STUDENT' ? 'Student' : 'Campus Administration',
+      created_at: h.created_at,
+    }));
+
+  res.json({
+    id: grievance.id,
+    public_id: grievance.public_id,
+    display_no: grievance.display_no,
+    college_id: grievance.college_id,
+    college_name: college?.display_name || 'College Campus',
+    description: grievance.description,
+    summary: grievance.summary,
+    category_name: cat?.name || 'General Maintenance',
+    department_name: dept?.name || 'Campus Operations',
+    priority: grievance.priority,
+    location: grievance.location,
+    status: grievance.status,
+    due_at: grievance.due_at,
+    created_at: grievance.created_at,
+    resolved_at: grievance.resolved_at,
+    resolution_note: grievance.resolution_note,
+    sla,
+    timeline: history,
   });
 });
 

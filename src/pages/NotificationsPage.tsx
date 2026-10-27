@@ -180,22 +180,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
         </div>
       )}
 
-      {/* Interactive Demo Switcher Banner */}
-      <div className="pt-4 flex items-center justify-between border-t border-surface-container">
-        <div className="flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[18px] text-secondary">visibility</span>
-          <span className="text-[12px] font-semibold text-secondary">
-            Empty State Preview (New Student Account):
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowEmptyPreview(!showEmptyPreview)}
-          className="text-[11px] font-medium text-primary-container bg-surface-container px-2.5 py-1 rounded-md active:scale-95 transition-all"
-        >
-          {showEmptyPreview ? 'Show Notification Feed' : 'Toggle Empty View'}
-        </button>
-      </div>
+
 
       {/* Empty State View Card (Stitch Image 9) */}
       {showEmptyPreview && (

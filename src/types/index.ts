@@ -1,4 +1,4 @@
-export type UserRole = 'STUDENT' | 'OFFICER' | 'GRIEVANCE_CELL' | 'ADMIN';
+export type UserRole = 'STUDENT' | 'TEACHER' | 'OFFICER' | 'GRIEVANCE_CELL' | 'ADMIN';
 export type PriorityLevel = 'Critical' | 'High' | 'Medium' | 'Low';
 export type GrievanceStatus = 'SUBMITTED' | 'ASSIGNED' | 'IN_PROGRESS' | 'ESCALATED' | 'RESOLVED';
 export type SlaStatus = 'ON_TIME' | 'DUE_SOON' | 'OVERDUE' | 'RESOLVED_ON_TIME' | 'RESOLVED_LATE';
@@ -16,6 +16,8 @@ export interface User {
   academic_department?: string | null;
   year?: string | null;
   division?: string | null;
+  roll_no?: string | null;
+  designation?: string | null;
   phone?: string | null;
 }
 
@@ -156,5 +158,35 @@ export interface GrievanceAiSummary {
   recommendedAction: string;
   model: string;
   generatedAt: string;
+}
+
+export interface PublicTimelineItem {
+  id: number;
+  status: string | null;
+  kind: string;
+  note: string;
+  actor_role: string;
+  created_at: string;
+}
+
+export interface PublicTrackingGrievance {
+  id?: number;
+  public_id: string;
+  display_no: string;
+  college_id?: number;
+  college_name?: string;
+  description: string;
+  summary: string;
+  category_name: string;
+  department_name: string;
+  priority: PriorityLevel;
+  location: string;
+  status: GrievanceStatus;
+  due_at: string;
+  created_at: string;
+  resolved_at: string | null;
+  resolution_note?: string | null;
+  sla: SlaInfo;
+  timeline: PublicTimelineItem[];
 }
 

@@ -45,17 +45,21 @@ def register(
     if not college:
         college = db.query(College).first()
 
-    # Rule: Self-registered user is ALWAYS STUDENT (ignore role, college_id, department_id from client)
+    # Self-registered user can be STUDENT or TEACHER (ADMIN/OFFICER privilege escalation safely rejected to STUDENT)
+    clean_role = payload.role.strip().upper() if payload.role else "STUDENT"
+    assigned_role = "TEACHER" if clean_role == "TEACHER" else "STUDENT"
+
     new_user = User(
         email=clean_email,
         password_hash=hash_password(payload.password),
         name=payload.name.strip(),
-        role="STUDENT",
+        role=assigned_role,
         college_id=college.id,
         department_id=None,
         academic_department=payload.academic_department.strip() if payload.academic_department else "Computer Engineering",
-        year=payload.year.strip() if payload.year else "TE",
-        division=payload.division.strip() if payload.division else "Div B",
+        year=payload.year.strip() if (payload.year and assigned_role != "TEACHER") else ("Faculty" if assigned_role == "TEACHER" else "TE"),
+        division=payload.designation.strip() if (getattr(payload, 'designation', None) and payload.designation) else (payload.division.strip() if payload.division else ("Faculty" if assigned_role == "TEACHER" else "Div B")),
+        roll_no=payload.roll_no.strip() if payload.roll_no else None,
         phone=payload.phone.strip() if payload.phone else None,
     )
 
@@ -77,6 +81,7 @@ def register(
         academic_department=new_user.academic_department,
         year=new_user.year,
         division=new_user.division,
+        roll_no=new_user.roll_no,
         phone=new_user.phone,
         created_at=new_user.created_at,
     )
@@ -108,7 +113,13 @@ def login(
 
     user = db.query(User).filter(User.email == clean_email).first()
 
-    if not user or not verify_password(payload.password, user.password_hash):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account found with this email. Please register first.",
+        )
+
+    if not verify_password(payload.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid college email or password",

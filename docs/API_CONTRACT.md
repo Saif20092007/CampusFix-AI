@@ -13,7 +13,7 @@ This document details every REST endpoint used by the React frontend and tested 
   ```json
   {
     "name": "Saif Patil",
-    "email": "saif@nmiet.demo",
+    "email": "saif@nmiet.edu.in",
     "password": "password123",
     "year": "TE",
     "academic_department": "Computer Engineering",
@@ -22,7 +22,7 @@ This document details every REST endpoint used by the React frontend and tested 
   }
   ```
 - **Security Enforcements**:
-  - `role` is strictly forced to `STUDENT` regardless of payload.
+  - `role` is strictly forced to `STUDENT` or `TEACHER` based on route logic.
   - `college_id` is strictly assigned from `DEFAULT_REGISTRATION_COLLEGE` env var (defaults to `1` / NMIET).
   - `department_id` is set to `null` (service department is for staff only).
 - **Response** (`201 Created`):
@@ -32,7 +32,7 @@ This document details every REST endpoint used by the React frontend and tested 
     "user": {
       "id": 1,
       "name": "Saif Patil",
-      "email": "saif@nmiet.demo",
+      "email": "saif@nmiet.edu.in",
       "role": "STUDENT",
       "college_id": 1,
       "college_name": "Nutan Maharashtra Institute of Engineering & Technology",
@@ -52,7 +52,7 @@ This document details every REST endpoint used by the React frontend and tested 
 - **Request Body**:
   ```json
   {
-    "email": "student@nmiet.demo",
+    "email": "student@nmiet.edu.in",
     "password": "campus123"
   }
   ```

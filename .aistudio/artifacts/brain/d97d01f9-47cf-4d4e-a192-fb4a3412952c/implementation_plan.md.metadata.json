@@ -1,6 +1,0 @@
-{
-  "summary": "Implementation plan for CSV and PDF export functionality tailored to Grievance Cell In-Charge and HOD roles. Covers both filtered list exports and single ticket audit reports using client-side generation (Blob/URL for CSV and jsPDF for PDF), complete with academic branding, privacy compliance, and responsive desktop and mobile actions.",
-  "updatedAt": "2026-10-12T19:59:24.284923155Z",
-  "requestFeedback": true,
-  "userFacing": true
-}

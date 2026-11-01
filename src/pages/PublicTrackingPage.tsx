@@ -150,18 +150,16 @@ export const PublicTrackingPage: React.FC<PublicTrackingPageProps> = ({
         </form>
       </div>
 
-      {/* Initial Empty State (before user searches) */}
+      {/* Initial Empty State View */}
       {!grievance && !isLoading && !errorMsg && (
-        <div className="w-full p-8 rounded-2xl bg-surface-container-lowest border border-surface-container flex flex-col items-center text-center gap-3 text-secondary animate-fade-in mb-6">
-          <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+        <div className="w-full p-8 rounded-2xl bg-surface-container-lowest text-center flex flex-col items-center justify-center border border-dashed border-surface-container-high mb-6">
+          <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
             <span className="material-symbols-outlined text-[26px]">manage_search</span>
           </div>
-          <div className="flex flex-col gap-1 max-w-sm">
-            <span className="text-[15px] font-bold text-on-surface">Enter Ticket Reference</span>
-            <p className="text-[13px] leading-relaxed">
-              Enter your complaint reference code (e.g., <strong>CF-00104</strong>) above and click <strong>Track Complaint</strong> to view real-time status and audit history.
-            </p>
-          </div>
+          <h2 className="text-[16px] font-bold text-on-surface">No Ticket Selected</h2>
+          <p className="text-[13px] text-secondary max-w-sm mt-1 leading-relaxed">
+            Enter your complaint reference number above or click one of the sample tickets to check its live status and resolution updates.
+          </p>
         </div>
       )}
 
@@ -388,23 +386,24 @@ export const PublicTrackingPage: React.FC<PublicTrackingPageProps> = ({
             </div>
           )}
 
-          {/* Quick Action Footer */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-surface-container-low border border-surface-container">
-            <span className="text-[12px] text-secondary text-center sm:text-left">
-              Need to submit a new complaint or manage existing tickets?
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onNavigateLogin}
-                className="px-4 py-2 rounded-xl bg-primary text-on-primary font-semibold text-[13px] shadow-sm hover:opacity-95 cursor-pointer"
-              >
-                Sign In to Student Portal
-              </button>
-            </div>
-          </div>
         </div>
       )}
+
+      {/* Quick Action Footer */}
+      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-surface-container-low border border-surface-container mt-2">
+        <span className="text-[12px] text-secondary text-center sm:text-left">
+          Need to submit a new complaint or manage existing tickets?
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onNavigateLogin}
+            className="px-4 py-2 rounded-xl bg-primary text-on-primary font-semibold text-[13px] shadow-sm hover:opacity-95 cursor-pointer"
+          >
+            Sign In to Student Portal
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

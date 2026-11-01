@@ -18,15 +18,10 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
 
   const handleQuickTrackSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onTrackGrievance(quickQuery.trim() || 'CF-00104');
+    if (quickQuery.trim()) {
+      onTrackGrievance(quickQuery.trim());
+    }
   };
-
-  const sampleTickets = [
-    { label: '#CF-00104 (Wi-Fi issue)', id: 'CF-00104' },
-    { label: '#CF-00124 (Hostel Lights)', id: 'CF-00124' },
-    { label: '#CF-00092 (Water Pump)', id: 'CF-00092' },
-    { label: '#4 (Quick ID)', id: '4' },
-  ];
 
   return (
     <div className={`min-h-screen bg-surface text-on-surface flex flex-col font-sans transition-all ${
@@ -172,21 +167,6 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
               <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
             </button>
           </form>
-        </div>
-
-        {/* Quick sample chips */}
-        <div className="flex flex-wrap items-center gap-1.5 mt-2 px-1 text-[11px] text-secondary">
-          <span>Quick test:</span>
-          {sampleTickets.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => onTrackGrievance(t.id)}
-              className="font-mono text-primary hover:underline cursor-pointer font-semibold"
-            >
-              {t.label}
-            </button>
-          ))}
         </div>
       </section>
 

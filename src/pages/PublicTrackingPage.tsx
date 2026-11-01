@@ -16,19 +16,12 @@ export const PublicTrackingPage: React.FC<PublicTrackingPageProps> = ({
   onNavigateLogin,
   onNavigateRegister,
 }) => {
-  const [query, setQuery] = useState(initialTicketId || 'CF-00104');
+  const [query, setQuery] = useState(initialTicketId || '');
   const [searchedId, setSearchedId] = useState<string>('');
   const [grievance, setGrievance] = useState<PublicTrackingGrievance | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-
-  const sampleTickets = [
-    { label: '#CF-00104 (Wi-Fi Drops - Resolved)', id: 'CF-00104' },
-    { label: '#CF-00124 (Hostel Lights - In Progress)', id: 'CF-00124' },
-    { label: '#CF-00092 (Water Pump - Escalated)', id: 'CF-00092' },
-    { label: '#4 (Quick ID Lookup)', id: '4' },
-  ];
 
   const handleTrack = async (ticketRef: string) => {
     const clean = ticketRef.trim();
@@ -53,9 +46,6 @@ export const PublicTrackingPage: React.FC<PublicTrackingPageProps> = ({
     if (initialTicketId) {
       setQuery(initialTicketId);
       handleTrack(initialTicketId);
-    } else {
-      // Auto-load sample ticket 4 / CF-00104 for instant live preview
-      handleTrack('CF-00104');
     }
   }, [initialTicketId]);
 
@@ -158,28 +148,22 @@ export const PublicTrackingPage: React.FC<PublicTrackingPageProps> = ({
             )}
           </button>
         </form>
-
-        {/* Quick Sample Chips */}
-        <div className="mt-3.5 flex flex-wrap items-center gap-1.5 pt-2 border-t border-surface-container text-[12px]">
-          <span className="text-secondary font-medium mr-1 flex items-center gap-1">
-            <span className="material-symbols-outlined text-[14px] text-primary">tips_and_updates</span>
-            Try sample:
-          </span>
-          {sampleTickets.map((sample) => (
-            <button
-              key={sample.id}
-              type="button"
-              onClick={() => {
-                setQuery(sample.id);
-                handleTrack(sample.id);
-              }}
-              className="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-mono text-[11px] font-semibold border border-surface-container-high transition-colors cursor-pointer"
-            >
-              {sample.label}
-            </button>
-          ))}
-        </div>
       </div>
+
+      {/* Initial Empty State (before user searches) */}
+      {!grievance && !isLoading && !errorMsg && (
+        <div className="w-full p-8 rounded-2xl bg-surface-container-lowest border border-surface-container flex flex-col items-center text-center gap-3 text-secondary animate-fade-in mb-6">
+          <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+            <span className="material-symbols-outlined text-[26px]">manage_search</span>
+          </div>
+          <div className="flex flex-col gap-1 max-w-sm">
+            <span className="text-[15px] font-bold text-on-surface">Enter Ticket Reference</span>
+            <p className="text-[13px] leading-relaxed">
+              Enter your complaint reference code (e.g., <strong>CF-00104</strong>) above and click <strong>Track Complaint</strong> to view real-time status and audit history.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Error / Not Found View */}
       {errorMsg && (

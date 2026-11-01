@@ -25,5 +25,4 @@ backend/uploads/
 data/
 .env
 .venv/
-.aistudio/
 

@@ -13,8 +13,8 @@ This document details every REST endpoint used by the React frontend and tested 
   ```json
   {
     "name": "Saif Patil",
-    "email": "student@nmiet.edu.in",
-    "password": "<password>",
+    "email": "saif@nmiet.edu.in",
+    "password": "password123",
     "year": "TE",
     "academic_department": "Computer Engineering",
     "division": "Div B",
@@ -53,7 +53,7 @@ This document details every REST endpoint used by the React frontend and tested 
   ```json
   {
     "email": "student@nmiet.edu.in",
-    "password": "<account_password>"
+    "password": "campus123"
   }
   ```
 - **Response** (`200 OK`): Same JSON format as `register` response.

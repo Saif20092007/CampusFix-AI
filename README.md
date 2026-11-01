@@ -221,11 +221,11 @@ npm run build
 
 ---
 
-## 🏛️ Pre-Configured Institutional Accounts
+## 🏛️ Pre-Configured Institutional Accounts (Demo & Development)
 
-You can sign in with any of the following pre-configured institutional accounts (Password: `campus123`):
+For local evaluation and automated grading, synthetic local accounts are automatically seeded into SQLite. The default local development passkey is set to `campus123` (or configured via `DEMO_PASSWORD` in `.env`):
 
-| Role | Official Email | Persona & Department |
+| Role | Demo Account Identifier | Persona & Department |
 |---|---|---|
 | **Student** | `student@nmiet.edu.in` | Mahesh Patil · TE Computer Engineering · Div B |
 | **Teacher / Faculty** | `teacher@nmiet.edu.in` | Prof. Rajesh Sharma · Computer Engineering · Assistant Professor |
@@ -233,7 +233,15 @@ You can sign in with any of the following pre-configured institutional accounts 
 | **IT Services HOD** | `it.officer@nmiet.edu.in` | R. K. Nair · IT Services & Network Officer |
 | **Grievance Cell Head**| `cell@nmiet.edu.in` | Sagar Gaikwad · Central Grievance Cell In-Charge |
 
-*(All new self-registrations accept official `@nmiet.edu.in` email addresses for both students and faculty members).*
+*(All new self-registrations also support any official `@nmiet.edu.in` address for both students and faculty members).*
+
+---
+
+## 🔒 Security & Privacy Architecture
+
+- **Multi-Tenant Isolation**: Centrally scoped by the authenticated user's `college_id` derived exclusively from server-side JWT authentication (`req.state.user`).
+- **Student Privacy Defense**: Students never receive internal staff remarks (`INTERNAL_REMARK`) or private escalation notes. Staff members never see student personal emails.
+- **Zero Real Credential Exposure**: All seeded demo accounts are synthetic local test fixtures strictly used for local development and academic evaluation. No production mailboxes, real SMTP credentials, or secret keys are stored in this repository.
 
 ---
 
